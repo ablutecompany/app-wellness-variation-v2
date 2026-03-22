@@ -4,7 +4,7 @@ import { Container, Typography } from '../components/Base';
 import { theme } from '../theme';
 import { BrandLogo } from '../components/BrandLogo';
 import { ThemeCard } from '../components/ThemeCard';
-import { Utensils, Zap, SlidersHorizontal, Activity, Database, Smartphone, X, User, ChevronRight, Menu, Battery, Heart, Scale, Droplets, Target, Settings, RefreshCw, Moon, Droplet, Brain, ChevronsDown } from 'lucide-react-native';
+import { Utensils, Zap, SlidersHorizontal, Activity, Database, Smartphone, X, User, ChevronRight, Menu, Battery, Heart, Scale, Droplets, Target, Settings, RefreshCw, Moon, Droplet, Brain } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Video, ResizeMode } from 'expo-av';
@@ -137,17 +137,6 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const floatAnim1 = useRef(new Animated.Value(0)).current;
   const floatAnim2 = useRef(new Animated.Value(1)).current;
-  const arrowAnim = useRef(new Animated.Value(0)).current;
-
-  const arrowTranslate = arrowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-5, 10]
-  });
-
-  const arrowOpacity = arrowAnim.interpolate({
-    inputRange: [0, 0.7, 1],
-    outputRange: [0, 1, 0]
-  });
 
   // ── Switch Setup ──────────────────────────────────────────────────────────
   const switchAnim = useRef(new Animated.Value(0)).current; // 0 = UP, 160 = DOWN
@@ -164,17 +153,16 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         switchAnim.stopAnimation();
       },
       onPanResponderMove: (_, gestureState) => {
-        // Divide dy by 0.6 because the visual component is scaled to 60%
-        let newY = (isOff.current ? 160 : 0) + (gestureState.dy / 0.6);
+        let newY = (isOff.current ? 160 : 0) + gestureState.dy;
         if (newY < 0) newY = 0;
         if (newY > 160) newY = 160;
         switchAnim.setValue(newY);
       },
       onPanResponderRelease: (_, gestureState) => {
-        let newY = (isOff.current ? 160 : 0) + (gestureState.dy / 0.6);
+        let newY = (isOff.current ? 160 : 0) + gestureState.dy;
         let toValue = 0;
         // Se passar da métrica ou tiver pull rápido para baixo
-        if (newY > 60 || (gestureState.vy / 0.6) > 0.4) {
+        if (newY > 60 || gestureState.vy > 0.4) {
           toValue = 160;
           isOff.current = true;
         } else {
@@ -220,7 +208,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   const centerContentY = drawerAnim.interpolate({
     inputRange: [DRAWER_UP, DRAWER_DOWN],
-    outputRange: [-230, -80],
+    outputRange: [-150, 0],
     extrapolate: 'clamp',
   });
 
@@ -253,10 +241,6 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   // ── Central Visual Animation ──────────────────────────────────────────────
   React.useEffect(() => {
-    Animated.loop(
-      Animated.timing(arrowAnim, { toValue: 1, duration: 1500, useNativeDriver: true })
-    ).start();
-
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.2, duration: 3000, useNativeDriver: true }),
@@ -349,11 +333,15 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                 <User size={20} color="#fff" />
               </TouchableOpacity>
             </View>
+            <TouchableOpacity style={styles.evalBadge}>
+              <Typography variant="caption" style={styles.evalText}>EVALUATION:</Typography>
+              <Typography variant="caption" style={styles.evalVal}>8 DAYS AGO</Typography>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* ── CENTRAL VISUAL (The HoloPulse) ────────────────────────────────── */}
-        <Animated.View style={[styles.centerContainer, { transform: [{ translateY: centerContentY }, { scale: 0.6 }] }]}>
+        <Animated.View style={[styles.centerContainer, { transform: [{ translateY: centerContentY }] }]}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
 
             {/* Outer Blue Aura */}
@@ -365,16 +353,6 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
                   {/* The Track Base */}
                   <View style={{ width: 240, height: 400, borderRadius: 120, overflow: 'hidden', backgroundColor: 'rgba(5, 10, 20, 0.4)', zIndex: 10 }}>
-                    
-                    {/* Background Text / Slide CTA */}
-                    <View style={{ position: 'absolute', bottom: 70, left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' }}>
-                       <Animated.View style={{ opacity: arrowOpacity, transform: [{ translateY: arrowTranslate }], marginBottom: 16 }}>
-                         <ChevronsDown size={28} color="#00F2FF" />
-                       </Animated.View>
-                       <Typography style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' }}>8 dias desde</Typography>
-                       <Typography style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' }}>a última avaliação</Typography>
-                    </View>
-
                     <Animated.View style={{ width: 240, height: 240, transform: [{ translateY: switchAnim }], zIndex: 9999 }} {...switchPanResponder.panHandlers}>
                       <View style={[styles.pulseContainer, { marginBottom: 0 }]} pointerEvents="box-none">
                     {/* Outer dynamically playing border */}
@@ -404,14 +382,9 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                       />
                       <Image
                         source={require('../../assets/hologram_body.png')}
-                        style={{ position: 'absolute', width: 223, height: 223, opacity: 0.3 }}
+                        style={{ position: 'absolute', width: 223, height: 223, opacity: 0.85 }}
                         resizeMode="contain"
                       />
-                      
-                      {/* Floating CTA over Hologram */}
-                      <View style={{ position: 'absolute', zIndex: 10 }}>
-                        <Typography style={{ color: '#00F2FF', fontSize: 10, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center' }}>Deslize para atualizar</Typography>
-                      </View>
                       <LinearGradient
                         colors={['rgba(0, 242, 255, 0.2)', 'rgba(0, 212, 170, 0.1)']}
                         style={StyleSheet.absoluteFillObject}

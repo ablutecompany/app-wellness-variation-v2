@@ -16,6 +16,7 @@ interface ThemeProps {
   refText2: string;
   score?: number;
   iconName?: keyof typeof IconMap;
+  textValue?: string;
   suggestions?: { title: string, desc: string }[];
 }
 
@@ -100,6 +101,7 @@ export const ThemeCard: React.FC<ThemeProps> = ({
   refText2,
   score,
   iconName,
+  textValue,
   suggestions
 }) => {
   const [showRefs, setShowRefs] = useState(false);
@@ -114,6 +116,12 @@ export const ThemeCard: React.FC<ThemeProps> = ({
           </View>
           {score !== undefined && (
             <ScoreGauge score={score} iconName={iconName} label={title} />
+          )}
+          {textValue !== undefined && (
+            <View style={styles.textValueContainer}>
+              <Typography style={styles.textValueText}>{textValue}</Typography>
+              <Typography style={styles.textValueSub}>anos</Typography>
+            </View>
           )}
         </View>
         
@@ -279,6 +287,28 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     lineHeight: 22,
     fontSize: 13,
+  },
+  textValueContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 242, 255, 0.2)',
+    backgroundColor: 'rgba(0, 242, 255, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textValueText: {
+    color: '#00F2FF',
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  textValueSub: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: -2,
+    letterSpacing: 1,
   },
   actionRow: {
     flexDirection: 'row',
