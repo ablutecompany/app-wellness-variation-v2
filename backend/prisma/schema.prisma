@@ -1,0 +1,645 @@
+// This is your Prisma schema file
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- IDENTITY & PROFILE (Section 4) ---
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  phone               String?
+  name                String
+  dateOfBirth         DateTime
+  sex                 String
+  language            String               @default("pt-PT")
+  country             String
+  timezone            String
+  accountStatus       String               @default("active")
+  role                UserRole             @default(END_USER)
+  passwordHash        String
+  onboardingCompleted Boolean              @default(false)
+  lastLoginAt         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  profile             UserProfile?
+  preferences         UserPreferences?
+  consents            Consent[]
+  creditWallet        CreditWallet?
+  creditTransactions  CreditTransaction[]
+  equipmentSessions   EquipmentSession[]
+  measurementSessions MeasurementSession[]
+  biomarkerResults    BiomarkerResult[]
+  fecalAssessments    FecalAssessment[]
+  signalSummaries     PhysiologicalSignalSummary[]
+  bodySnapshots       BodyCompositionSnapshot[]
+  dataSources         ConnectedDataSource[]
+  metricRecords       ExternalMetricRecord[]
+  conversations       ConversationSession[]
+  extractions         StructuredProfileExtraction[]
+  themeScores         ThemeScore[]
+  insights            ThemeInsight[]
+  recommendations     Recommendation[]
+  addonInstallations  AddonInstallation[]
+  auditEvents         AuditEvent[]
+  notifications       NotificationEvent[]
+  notificationPrefs   NotificationPreference[]
+  trendSeries         TrendSeries[]
+}
+
+model UserProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  height                Float
+  baseWeight            Float
+  mainGoal              String
+  secondaryGoals        String[]
+  activityLevel         String
+  sportContext          String?
+  sleepPattern          String?
+  baseNutrition         String?
+  dietaryRestrictions   String[]
+  allergies             String[]
+  currentSupplementation String[]
+  reportedMedication    String[]
+  reportedSymptoms      String[]
+  bowelHabits           String?
+  menstrualCycleInfo    Json?
+  contextualNotes       String?
+  completenessScore     Int      @default(0)
+  updatedAt             DateTime @updatedAt
+}
+
+model UserPreferences {
+  id                        String  @id @default(uuid())
+  userId                    String  @unique
+  user                      User    @relation(fields: [userId], references: [id])
+  preferredUnits            String  @default("metric")
+  notificationsEnabled      Boolean @default(true)
+  showRawData               Boolean @default(false)
+  receiveRecommendations    Boolean @default(true)
+  receiveWeeklySummaries    Boolean @default(true)
+  allowSharingWithAddons    Boolean @default(false)
+  allowVoiceProcessing      Boolean @default(false)
+  allowPassiveDataUsage     Boolean @default(false)
+}
+
+// --- CONSENT & PERMISSIONS (Section 5) ---
+
+model Consent {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String // health_data_access, motion_data_access, etc.
+  source      String // app, web, admin
+  granted     Boolean
+  grantedAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  version     String
+  metadata    Json?
+}
+
+model PermissionGrant {
+  id              String    @id @default(uuid())
+  userId          String
+  addonId         String
+  scope           String // read_profile_basic, etc.
+  granted         Boolean
+  grantedAt       DateTime  @default(now())
+  revokedAt       DateTime?
+  expiresAt       DateTime?
+  metadata        Json?
+}
+
+// --- EQUIPMENT & LOCATION (Section 6) ---
+
+model Equipment {
+  id                 String             @id @default(uuid())
+  uuid               String             @unique
+  serialNumber       String             @unique
+  type               String
+  status             String
+  locationId         String?
+  location           EquipmentLocation? @relation(fields: [locationId], references: [id])
+  ownerOrgId         String?
+  firmwareVersion    String?
+  softwareVersion    String?
+  nfcPairingEnabled  Boolean            @default(true)
+  lastSeenAt         DateTime?
+  metadata           Json?
+  sessions           EquipmentSession[]
+}
+
+model EquipmentLocation {
+  id              String      @id @default(uuid())
+  name            String
+  latitude        Float
+  longitude       Float
+  address         String
+  city            String
+  country         String
+  isPublic        Boolean     @default(true)
+  openingHours    Json?
+  accessibility   String?
+  equipments      Equipment[]
+}
+
+model EquipmentSession {
+  id                 String              @id @default(uuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id])
+  equipmentId        String
+  equipment          Equipment           @relation(fields: [equipmentId], references: [id])
+  pairingMethod      String // NFC, QR, manual, bluetooth
+  status             String
+  startedAt          DateTime            @default(now())
+  endedAt            DateTime?
+  creditsConsumed    Int                 @default(0)
+  failureReason      String?
+  metadata           Json?
+  measurementSession MeasurementSession?
+}
+
+// --- CREDITS & BILLING (Section 7) ---
+
+model CreditWallet {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  currentBalance    Int      @default(0)
+  lifetimePurchased Int      @default(0)
+  lifetimeConsumed  Int      @default(0)
+  updatedAt         DateTime @updatedAt
+}
+
+model CreditTransaction {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  type          String // purchase, consumption, etc.
+  amount        Int
+  balanceBefore Int
+  balanceAfter  Int
+  referenceType String?
+  referenceId   String?
+  description   String?
+  createdAt     DateTime @default(now())
+}
+
+// --- MEASUREMENTS (Section 8) ---
+
+model MeasurementSession {
+  id                String                 @id @default(uuid())
+  userId            String
+  user              User                   @relation(fields: [userId], references: [id])
+  equipmentSessionId String?               @unique
+  equipmentSession  EquipmentSession?      @relation(fields: [equipmentSessionId], references: [id])
+  sourceType        String // ablute_equipment, wearable, etc.
+  sourceId          String?
+  sessionType       String // full_analysis, spot_measurement, etc.
+  startedAt         DateTime               @default(now())
+  endedAt           DateTime?
+  qualityScore      Int?
+  validationStatus  String
+  processingStatus  String
+  notes             String?
+  rawMeasurements   RawMeasurement[]
+  normalizedMetrics NormalizedMeasurement[]
+  biomarkerResults  BiomarkerResult[]
+  fecalAssessments  FecalAssessment[]
+  signalSummaries   PhysiologicalSignalSummary[]
+  bodySnapshots     BodyCompositionSnapshot[]
+  themeScores       ThemeScore[]
+}
+
+model RawMeasurement {
+  id                   String             @id @default(uuid())
+  sessionId            String
+  session              MeasurementSession @relation(fields: [sessionId], references: [id])
+  family               String // urinalysis, ppg, etc.
+  code                 String
+  rawValue             Json
+  unit                 String?
+  capturedAt           DateTime
+  sourceMetadata       Json?
+  qualityFlags         String[]
+  ingestVersion        String
+  derivedNormalized    NormalizedMeasurement[]
+}
+
+model NormalizedMeasurement {
+  id                String             @id @default(uuid())
+  sessionId         String
+  session           MeasurementSession @relation(fields: [sessionId], references: [id])
+  type              String
+  code              String
+  valueNumeric      Float?
+  valueText         String?
+  unit              String?
+  rangeLow          Float?
+  rangeHigh         Float?
+  version           String
+  rawMeasurementId  String?
+  rawMeasurement    RawMeasurement?    @relation(fields: [rawMeasurementId], references: [id])
+  capturedAt        DateTime
+  confidenceScore   Int?
+  validationStatus  String
+}
+
+// --- BIOMARKERS (Section 9) ---
+
+model BiomarkerDefinition {
+  id                     String            @id @default(uuid())
+  code                   String            @unique
+  displayName            String
+  family                 String
+  sampleType             String
+  unitDefault            String
+  isUserVisible          Boolean           @default(true)
+  isThemeRelevant        Boolean           @default(true)
+  supportsRanges         Boolean           @default(true)
+  supportsTrends         Boolean           @default(true)
+  descriptionInternal    String?
+  active                 Boolean           @default(true)
+  results                BiomarkerResult[]
+}
+
+model BiomarkerResult {
+  id                 String              @id @default(uuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id])
+  sessionId          String
+  session            MeasurementSession @relation(fields: [sessionId], references: [id])
+  definitionId       String
+  definition         BiomarkerDefinition @relation(fields: [definitionId], references: [id])
+  valueNumeric       Float
+  valueText          String?
+  unit               String
+  capturedAt         DateTime
+  confidenceScore    Int?
+  visibilityScope    String              @default("user_common")
+  internalOnly       Boolean             @default(false)
+  userVisible        Boolean             @default(true)
+  flaggedForReview   Boolean             @default(false)
+  statusSimple       String // low, normal, high, etc.
+  metadata           Json?
+}
+
+// --- FECAL (Section 10) ---
+
+model FecalAssessment {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id])
+  sessionId        String
+  session          MeasurementSession @relation(fields: [sessionId], references: [id])
+  bristolType      Int
+  characterization Json
+  userSummary      Json
+  internalFlags    Json
+  hasHiddenFields  Boolean            @default(false)
+  capturedAt       DateTime
+  confidenceScore  Int?
+}
+
+// --- SIGNALS & BODY (Section 11) ---
+
+model PhysiologicalSignalSummary {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id])
+  sessionId        String
+  session          MeasurementSession @relation(fields: [sessionId], references: [id])
+  type             String // ppg, ccg, etc.
+  summary          Json
+  qualityScore     Int?
+  version          String
+  capturedAt       DateTime
+  userVisible      Boolean            @default(true)
+}
+
+model BodyCompositionSnapshot {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id])
+  sessionId        String
+  session          MeasurementSession @relation(fields: [sessionId], references: [id])
+  weight           Float
+  impedance        Float
+  bodyFatPercent   Float?
+  bodyWaterPercent Float?
+  leanMassEstimate Float?
+  confidence       Int?
+  capturedAt       DateTime
+}
+
+// --- EXTERNAL DATA (Section 12) ---
+
+model ConnectedDataSource {
+  id             String                 @id @default(uuid())
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id])
+  type           String // apple_health, etc.
+  externalUserId String?
+  status         String
+  scopes         Json
+  connectedAt    DateTime               @default(now())
+  lastSyncAt     DateTime?
+  metadata       Json?
+  records        ExternalMetricRecord[]
+}
+
+model ExternalMetricRecord {
+  id               String              @id @default(uuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id])
+  sourceId         String
+  source           ConnectedDataSource @relation(fields: [sourceId], references: [id])
+  metricType       String
+  valueNumeric     Float?
+  valueText        String?
+  unit             String?
+  periodStart      DateTime
+  periodEnd        DateTime
+  capturedAt       DateTime
+  payload          Json
+  status           String
+}
+
+// --- CHAT & VOICE (Section 13) ---
+
+model ConversationSession {
+  id          String                @id @default(uuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id])
+  channelType String // text, voice
+  purpose     String // onboarding, etc.
+  startedAt   DateTime              @default(now())
+  endedAt     DateTime?
+  status      String
+  messages    ConversationMessage[]
+  extractions StructuredProfileExtraction[]
+}
+
+model ConversationMessage {
+  id             String              @id @default(uuid())
+  sessionId      String
+  session        ConversationSession @relation(fields: [sessionId], references: [id])
+  senderType     String // user, system, ai
+  content        String
+  audioUrl       String?
+  createdAt      DateTime            @default(now())
+  metadata       Json?
+}
+
+model StructuredProfileExtraction {
+  id             String              @id @default(uuid())
+  userId         String
+  user           User                @relation(fields: [userId], references: [id])
+  sessionId      String
+  session        ConversationSession @relation(fields: [sessionId], references: [id])
+  extractedFields Json
+  confidence     Int
+  status         String
+  confirmedAt    DateTime?
+  version        String
+}
+
+// --- THEMES & INSIGHTS (Section 14-16) ---
+
+model ThemeDefinition {
+  id                 String       @id @default(uuid())
+  code               String       @unique
+  name               String
+  category           String
+  displayOrder       Int
+  active             Boolean      @default(true)
+  descriptionInternal String?
+  userDescription    String?
+  scores             ThemeScore[]
+}
+
+model ThemeScore {
+  id               String               @id @default(uuid())
+  userId           String
+  user             User                 @relation(fields: [userId], references: [id])
+  definitionId     String
+  definition       ThemeDefinition      @relation(fields: [definitionId], references: [id])
+  value            Int // 0-100
+  stateLabel       String // fraco, bom, etc.
+  band             String
+  generatedAt      DateTime             @default(now())
+  version          String
+  confidence       Int
+  sessionId        String?
+  session          MeasurementSession?  @relation(fields: [sessionId], references: [id])
+  dataWindow       Json
+  trendDelta       Float?
+  components       ThemeScoreComponent[]
+  insights         ThemeInsight[]
+  potentialGain    ThemePotentialGain?
+  recommendations  Recommendation[]
+}
+
+model ThemeScoreComponent {
+  id                String     @id @default(uuid())
+  scoreId           String
+  score             ThemeScore @relation(fields: [scoreId], references: [id])
+  type              String // biomarker, etc.
+  code              String
+  weight            Float
+  effectDirection   Int // 1, -1
+  valueSummary      String
+  contributionScore Int
+  metadata          Json?
+}
+
+model ThemeInsight {
+  id                 String     @id @default(uuid())
+  userId             String
+  user               User       @relation(fields: [userId], references: [id])
+  scoreId            String
+  score              ThemeScore @relation(fields: [scoreId], references: [id])
+  summaryShort       String
+  explanationLong    String
+  explanationFactors Json
+  language           String
+  tone               String
+  generatedAt        DateTime   @default(now())
+  version            String
+}
+
+model ThemePotentialGain {
+  id           String     @id @default(uuid())
+  scoreId      String     @unique
+  score        ThemeScore @relation(fields: [scoreId], references: [id])
+  current      Int
+  possibleMin  Int
+  possibleMax  Int
+  basis        Json
+  generatedAt  DateTime   @default(now())
+}
+
+// --- RECOMMENDATIONS (Section 17) ---
+
+model Recommendation {
+  id                 String                     @id @default(uuid())
+  userId             String
+  user               User                       @relation(fields: [userId], references: [id])
+  scoreId            String?
+  score              ThemeScore?                @relation(fields: [scoreId], references: [id])
+  type               String // nutrition, etc.
+  title              String
+  bodyShort          String
+  bodyLong           String
+  priorityRank       Int
+  effortLevel        String
+  impactLevel        String
+  userVisible        Boolean                    @default(true)
+  active             Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  expiresAt          DateTime?
+  version            String
+  foodExamples       RecommendationFoodExample[]
+}
+
+model RecommendationFoodExample {
+  id               String         @id @default(uuid())
+  recommendationId String
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id])
+  nutrientCode     String?
+  foodName         String
+  foodNote         String?
+  displayOrder     Int
+}
+
+// --- CONTENT VARIANTS (Section 18) ---
+
+model ContentVariantTemplate {
+  id             String  @id @default(uuid())
+  domain         String // theme_summary, etc.
+  templateKey    String
+  language       String
+  tone           String
+  variationGroup String
+  text           String
+  active         Boolean @default(true)
+}
+
+model GeneratedTextRegistry {
+  id            String   @id @default(uuid())
+  userId        String
+  outputType    String
+  relatedId     String
+  textHash      String
+  generatedText String
+  createdAt     DateTime @default(now())
+}
+
+// --- HISTORY & TRENDS (Section 20) ---
+
+model TrendSeries {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  scope       String // biomarker, theme, etc.
+  code        String
+  series      Json
+  periodType  String
+  generatedAt DateTime @default(now())
+  version     String
+}
+
+// --- NOTIFICATIONS (Section 21) ---
+
+model NotificationPreference {
+  id      String  @id @default(uuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id])
+  type    String
+  enabled Boolean @default(true)
+  channel String // app, sms, email
+  schedule Json?
+}
+
+model NotificationEvent {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  type         String
+  title        String
+  body         String
+  payload      Json?
+  status       String // pending, sent, failed
+  scheduledFor DateTime
+  sentAt       DateTime?
+}
+
+// --- ADD-ONS (Section 22) ---
+
+model AddonApp {
+  id               String               @id @default(uuid())
+  uuid             String               @unique
+  name             String
+  developerName    String
+  category         String
+  shortDescription String
+  longDescription  String
+  iconUrl          String?
+  status           String // approved, draft, etc.
+  integrationLevel Int
+  active           Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  installations    AddonInstallation[]
+  capabilities     AddonCapability[]
+}
+
+model AddonInstallation {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  addonId    String
+  addon      AddonApp  @relation(fields: [addonId], references: [id])
+  status     String
+  installedAt DateTime  @default(now())
+  removedAt   DateTime?
+}
+
+model AddonCapability {
+  id       String   @id @default(uuid())
+  addonId  String
+  addon    AddonApp @relation(fields: [addonId], references: [id])
+  code     String
+  active   Boolean  @default(true)
+}
+
+// --- AUDIT (Section 24) ---
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  actorType  String // user, system, agent, admin
+  actorId    String
+  user       User?    @relation(fields: [actorId], references: [id])
+  eventType  String
+  targetType String?
+  targetId   String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+}
+
+enum UserRole {
+  END_USER
+  SUPPORT_ADMIN
+  CLINICAL_CONTENT_ADMIN
+  INTEGRATION_ADMIN
+  HYPER_ADMIN
+}
+
