@@ -163,6 +163,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [showNfcModal, setShowNfcModal] = useState(false);
   const [isNfcScanning, setIsNfcScanning] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
+  const [bioTab, setBioTab] = useState(0);
   // Profile Form State
   const [profileName, setProfileName] = useState('Atleta Base');
   const [profileAge, setProfileAge] = useState('34');
@@ -637,26 +638,39 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
             </TouchableOpacity>
             <Typography variant="h2" style={styles.panelTitle}>Bioanálise</Typography>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelScroll}>
-            {BIO_CATEGORIES.map((cat, ci) => (
-              <View key={ci} style={{ marginBottom: 24 }}>
-                {/* Category header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 }}>
-                  <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: cat.color }} />
-                  <Typography style={{ color: cat.color, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                    {cat.label}
+
+          {/* ── Tab Bar ── */}
+          <View style={styles.bioTabBar}>
+            {BIO_CATEGORIES.map((cat, i) => {
+              const shortLabels = ['Urina', 'Fisiológica', 'Fecal'];
+              const isActive = bioTab === i;
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.bioTabBtn, isActive && { borderBottomColor: cat.color, borderBottomWidth: 2 }]}
+                  onPress={() => setBioTab(i)}
+                  activeOpacity={0.7}
+                >
+                  <Typography style={[
+                    styles.bioTabLabel,
+                    isActive ? { color: cat.color, fontWeight: '800' } : { color: 'rgba(255,255,255,0.4)' }
+                  ]}>
+                    {shortLabels[i]}
                   </Typography>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* ── Active Tab Content ── */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelScroll}>
+            {BIO_CATEGORIES[bioTab].markers.map((item, i) => (
+              <View key={i} style={styles.bioRow}>
+                <Typography style={styles.bioName}>{item.name}</Typography>
+                <View style={styles.bioValueArea}>
+                  <Typography style={styles.bioVal}>{item.value}</Typography>
+                  {item.unit ? <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography> : null}
                 </View>
-                {/* Markers */}
-                {cat.markers.map((item, i) => (
-                  <View key={i} style={styles.bioRow}>
-                    <Typography style={styles.bioName}>{item.name}</Typography>
-                    <View style={styles.bioValueArea}>
-                      <Typography style={styles.bioVal}>{item.value}</Typography>
-                      {item.unit ? <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography> : null}
-                    </View>
-                  </View>
-                ))}
               </View>
             ))}
           </ScrollView>
@@ -1627,5 +1641,25 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
     fontSize: 15,
+  },
+  bioTabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+    marginHorizontal: 20,
+    marginBottom: 4,
+  },
+  bioTabBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  bioTabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
 });
