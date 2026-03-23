@@ -10,19 +10,54 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Video, ResizeMode } from 'expo-av';
 
-const RAW_BIOMARKERS = [
-  { id: 'b1', name: 'NT-proBNP', value: '120', unit: 'pg/mL', source: 'ablute' },
-  { id: 'b2', name: 'F2-isoprostanos', value: '2.4', unit: 'ng/mg', source: 'ablute' },
-  { id: 'b3', name: 'Sódio', value: '140', unit: 'mEq/L', source: 'ablute' },
-  { id: 'b4', name: 'Potássio', value: '4.2', unit: 'mEq/L', source: 'ablute' },
-  { id: 'b5', name: 'Potencial Redox', value: '-12', unit: 'mV', source: 'ablute' },
-  { id: 'b6', name: 'pH Urinário', value: '6.2', unit: 'pH', source: 'ablute' },
-  { id: 'b7', name: 'Glicose', value: '88', unit: 'mg/dL', source: 'ablute' },
-  { id: 'b8', name: 'Ritmo Cardíaco', value: '64', unit: 'bpm', source: 'health_kit' },
-  { id: 'b9', name: 'ECG', value: 'Normal', unit: 'Ritmo', source: 'health_kit' },
-  { id: 'b10', name: 'PPG', value: '98', unit: '% SpO2', source: 'health_kit' },
-  { id: 'b11', name: 'Impedância', value: '58', unit: '% Água', source: 'ablute' },
-  { id: 'b12', name: 'Análise Intestinal', value: 'Saudável', unit: 'Flora', source: 'ablute' },
+const BIO_CATEGORIES = [
+  {
+    label: 'Análises de Urina',
+    color: '#00F2FF',
+    markers: [
+      { name: 'F2-isoprostanos', value: '1,8', unit: 'ng/mg creatinina' },
+      { name: 'Sódio urinário', value: '118', unit: 'mmol/L' },
+      { name: 'Potássio urinário', value: '42', unit: 'mmol/L' },
+      { name: 'Creatinina urinária', value: '128', unit: 'mg/dL' },
+      { name: 'Albumina', value: '18', unit: 'mg/L' },
+      { name: 'NGAL', value: '22', unit: 'ng/mL' },
+      { name: 'KIM-1', value: '1,6', unit: 'ng/mL' },
+      { name: 'Cistatina C', value: '0,11', unit: 'mg/L' },
+      { name: 'Glicose', value: '0', unit: 'mg/dL' },
+      { name: 'pH', value: '5,9', unit: '' },
+      { name: 'Nitritos', value: 'Negativo', unit: '' },
+      { name: 'Ureia', value: '1460', unit: 'mg/dL' },
+      { name: 'Ácido úrico', value: '68', unit: 'mg/dL' },
+    ],
+  },
+  {
+    label: 'Monitorização Fisiológica',
+    color: '#00D4AA',
+    markers: [
+      { name: 'ECG · FC repouso', value: '74', unit: 'bpm' },
+      { name: 'ECG · HRV (RMSSD)', value: '27', unit: 'ms' },
+      { name: 'ECG · Ritmo', value: 'Sinusal', unit: '' },
+      { name: 'PPG · SpO2', value: '98', unit: '%' },
+      { name: 'PPG · Perfusão', value: '4,2', unit: 'índice' },
+      { name: 'Impedância · Água corporal', value: '52,1', unit: '%' },
+      { name: 'Impedância · Gordura', value: '24,8', unit: '%' },
+      { name: 'Impedância · Massa muscular', value: '31,4', unit: 'kg' },
+      { name: 'Impedância · Ângulo de fase', value: '5,7', unit: '°' },
+      { name: 'Peso', value: '74,8', unit: 'kg' },
+      { name: 'Temperatura', value: '36,7', unit: '°C' },
+    ],
+  },
+  {
+    label: 'Avaliação Fecal',
+    color: '#FFA500',
+    markers: [
+      { name: 'Bristol', value: 'Tipo 3', unit: '' },
+      { name: 'Forma', value: 'Cilíndrica, contínua', unit: '' },
+      { name: 'Textura', value: 'Fissuras visíveis', unit: '' },
+      { name: 'Consistência', value: 'Média a firme', unit: '' },
+      { name: 'Cor', value: 'Castanho escuro', unit: '' },
+    ],
+  },
 ];
 
 const MOCK_THEMES = [
@@ -57,18 +92,18 @@ const MOCK_THEMES = [
     ]
   },
   {
-    title: 'Potencial',
-    score: 95,
+    title: 'Trânsito Intestinal',
+    score: 68,
     iconName: 'Target',
-    paragraph1: 'Hoje, dar o teu melhor não significa forçar mais.',
-    paragraph2: 'Significa usar bem a capacidade que tens, com foco, critério e sem gastar o que o teu corpo ainda precisa para recuperar. O melhor de hoje parece estar mais na consistência do que em ir até ao limite.',
-    refText1: 'Nesta leitura foram tidos em conta sobretudo os sinais que ajudam a perceber exigência, fadiga e capacidade de resposta no momento. A frequência cardíaca de repouso, a variabilidade cardíaca e a temperatura ligeiramente acima do teu habitual sugerem um corpo que já trabalhou bastante e que ainda está a reorganizar-se. A literatura associa muitas vezes este tipo de padrão a dias em que o melhor rendimento vem mais de boa gestão do que de insistir em mais carga.',
-    refText2: 'A interpretação clínica de questões de saúde cabe sempre a profissionais de saúde.',
+    paragraph1: 'Nível de alerta visual: Baixo, pela imagem isolada.',
+    paragraph2: 'Padrão globalmente estável e organizado, sem aspeto de diarreia nem fragmentação marcada. A presença de fissuras e o aspeto compacto apontam para fezes algo mais secas do que o ideal, compatível com hidratação intestinal subótima ou trânsito intestinal ligeiramente lento.',
+    refText1: 'Interpretação resumida: Evacuação formada e relativamente dentro do esperado, mas com sinais de ligeira secura. O padrão ideal estaria mais próximo de Bristol tipo 4, com superfície mais lisa e menor compactação.',
+    refText2: 'Sinais que justificam atenção: Fezes negras tipo alcatrão, sangue vermelho visível, muco persistente, dor importante, esforço frequente, alteração mantida do padrão intestinal.',
     suggestions: [
-      { title: 'Define uma prioridade principal para o resto do dia e protege-a', desc: 'Hoje, “dar o melhor” parece mais eficaz quando concentras energia no que importa mesmo.' },
-      { title: 'Fecha uma ou duas tarefas com qualidade em vez de dispersar por demasiadas frentes', desc: 'Neste estado, o rendimento tende a cair mais por fragmentação do que por falta de capacidade bruta.' },
-      { title: 'Se pensavas acrescentar mais uma sessão, mais uma reunião ou mais uma carga extra, reavalia', desc: 'Hoje pode ser mais inteligente consolidar o que já fizeste bem do que tentar esticar o dia.' },
-      { title: 'Usa o final do dia para sair com margem e não em desgaste total', desc: 'Neste caso específico, isso provavelmente vai valer mais para amanhã do que “espremer” o resto da energia hoje.' }
+      { title: 'Aumenta a ingestão de água ao longo do dia', desc: 'A hidratação intestinal subótima é uma das causas mais comuns de fezes mais secas e compactas.' },
+      { title: 'Inclui fibra solúvel nas refeições', desc: 'Aveia, fruta com pele, leguminosas e vegetais ajudam a suavizar o trânsito e melhorar a consistência.' },
+      { title: 'Mantém uma rotina de movimento regular', desc: 'A atividade física moderada é um dos estímulos mais eficazes para o trânsito intestinal saudável.' },
+      { title: 'Evita períodos prolongados sem comer', desc: 'Refeições regulares ativam o reflexo gastrocólico e favorecem a regularidade intestinal.' }
     ]
   },
   {
@@ -600,16 +635,28 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
             <TouchableOpacity onPress={() => Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start()}>
               <X size={24} color="#fff" />
             </TouchableOpacity>
-            <Typography variant="h2" style={styles.panelTitle}>Bio-análise</Typography>
+            <Typography variant="h2" style={styles.panelTitle}>Bioanálise</Typography>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelScroll}>
-            {RAW_BIOMARKERS.map((item, i) => (
-              <View key={i} style={styles.bioRow}>
-                <Typography style={styles.bioName}>{item.name}</Typography>
-                <View style={styles.bioValueArea}>
-                  <Typography style={styles.bioVal}>{item.value}</Typography>
-                  <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography>
+            {BIO_CATEGORIES.map((cat, ci) => (
+              <View key={ci} style={{ marginBottom: 24 }}>
+                {/* Category header */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 }}>
+                  <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: cat.color }} />
+                  <Typography style={{ color: cat.color, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                    {cat.label}
+                  </Typography>
                 </View>
+                {/* Markers */}
+                {cat.markers.map((item, i) => (
+                  <View key={i} style={styles.bioRow}>
+                    <Typography style={styles.bioName}>{item.name}</Typography>
+                    <View style={styles.bioValueArea}>
+                      <Typography style={styles.bioVal}>{item.value}</Typography>
+                      {item.unit ? <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography> : null}
+                    </View>
+                  </View>
+                ))}
               </View>
             ))}
           </ScrollView>
