@@ -9,6 +9,8 @@ import { Utensils, Zap, SlidersHorizontal, Activity, Database, Smartphone, X, Us
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Video, ResizeMode } from 'expo-av';
+import { getAppById } from '../miniapps/catalog';
+import { useStore } from '../store/useStore';
 
 const BIO_CATEGORIES = [
   {
@@ -156,6 +158,7 @@ const MOCK_THEMES = [
 
 export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { width, height } = useWindowDimensions();
+  const { installedAppIds, launchApp } = useStore();
   const themesFlatListRef = useRef<FlatList>(null);
   const themesPanelHeight = height;
   const [showProfile, setShowProfile] = useState(false);
@@ -706,11 +709,26 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
             <Animated.View style={{ paddingHorizontal: 24, paddingBottom: 20 }}>
               <View style={styles.appGrid}>
                 {[
-                  { id: '1', name: 'Nutri\nMenu', icon: <Utensils size={24} color="#00F2FF" /> },
-                  { id: '2', name: 'Female\nHealth', icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#00D4AA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#00D4AA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View> },
-                  { id: '3', name: 'Longevity\nSecrets', icon: <Sparkles size={24} color="#FFD700" /> },
-                ].map(app => (
-                  <TouchableOpacity key={app.id} style={styles.appItem} activeOpacity={0.7}>
+                   { id: 'nutri-menu', name: 'Nutri\nMenu', icon: <Utensils size={24} color="#00D4AA" />, color: '#00D4AA' },
+                   { id: 'femmhealth', name: 'Female\nHealth', icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#FF6FBA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#FF6FBA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View>, color: '#FF6FBA' },
+                   { id: 'longevity-secrets', name: 'Longevity\nSecrets', icon: <Sparkles size={24} color="#FFD700" />, color: '#FFD700' },
+                 ].map((drawerApp) => {
+                   const manifest = getAppById(drawerApp.id);
+                   const installed = installedAppIds.includes(drawerApp.id);
+                   return (
+                   <TouchableOpacity
+                     key={drawerApp.id}
+                     style={styles.appItem}
+                     activeOpacity={0.7}
+                     onPress={() => {
+                       if (manifest && installed) {
+                         launchApp(manifest);
+                         navigation?.navigate('MiniApp', { app: manifest });
+                       } else {
+                         navigation?.navigate('Apps');
+                       }
+                     }}
+                   >
                     <View style={[styles.appIconContainer, {
                       backgroundColor: 'rgba(5, 10, 20, 0.5)',
                       shadowColor: '#fff', // brilho externo suave
@@ -737,11 +755,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                         pointerEvents="none"
                       />
 
-                      <View style={{ zIndex: 10 }}>{app.icon}</View>
+                      <View style={{ zIndex: 10 }}>{drawerApp.icon}</View>
                     </View>
-                    <Typography variant="caption" style={[styles.appName, { textAlign: 'center', lineHeight: 12 }]}>{app.name}</Typography>
+                    <Typography variant="caption" style={[styles.appName, { textAlign: 'center', lineHeight: 12 }]}>{drawerApp.name}</Typography>
                   </TouchableOpacity>
-                ))}
+                   );
+                 })}
               </View>
             </Animated.View>
           </View>

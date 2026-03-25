@@ -14,6 +14,7 @@ import { WelcomeScreen } from './src/screens/OnboardingWelcome';
 import { OnboardingGoals } from './src/screens/OnboardingGoals';
 import { OnboardingPermissions } from './src/screens/OnboardingPermissions';
 import { PairingScreen } from './src/screens/PairingScreen';
+import { MiniAppContainer } from './src/miniapps/MiniAppContainer';
 import { 
   Home as HomeIcon, 
   Brain, 
@@ -69,6 +70,17 @@ export default function App() {
           component={ProfileScreen} 
           options={{ presentation: 'modal' }} 
         />
+        <Stack.Screen
+          name="MiniApp"
+          options={{
+            presentation: 'fullScreenModal',
+            animation: 'slide_from_bottom',
+          }}
+        >
+          {({ route, navigation }: any) => (
+            <MiniAppContainer app={(route.params as any).app} navigation={navigation} />
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
