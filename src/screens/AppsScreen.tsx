@@ -6,9 +6,14 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Star, Plus, ExternalLink } from 'lucide-react-native';
+import { Star, Plus, ExternalLink, ArrowLeft } from 'lucide-react-native';
+// expo-blur and expo-linear-gradient: web-safe fallbacks to avoid silent crashes
+const BlurView = Platform.OS === 'web'
+  ? ({ style, ...props }: any) => <View style={[style, { backgroundColor: 'rgba(5,7,10,0.85)' }]} {...props} />
+  : (() => { const { BlurView: BV } = require('expo-blur'); return BV; })();
+const LinearGradient = Platform.OS === 'web'
+  ? ({ style, colors, ...props }: any) => <View style={[style, { backgroundColor: colors?.[0] ?? '#05070A' }]} {...props} />
+  : (() => { const { LinearGradient: LG } = require('expo-linear-gradient'); return LG; })();
 import { Container, Typography } from '../components/Base';
 import { MINI_APP_CATALOG, getFeaturedApp } from '../miniapps/catalog';
 import { CATEGORY_LABELS, MiniAppManifest, MiniAppCategory, Permission, PERMISSION_LABELS } from '../miniapps/types';
@@ -183,7 +188,19 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
       >
         {/* ── Header ── */}
         <View style={styles.header}>
-          <Typography variant="h2" style={styles.title}>App Place</Typography>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Typography variant="h2" style={styles.title}>App Place</Typography>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate('Home')}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8,
+                backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20,
+                paddingHorizontal: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft size={14} color="rgba(255,255,255,0.5)" />
+              <Typography style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Início</Typography>
+            </TouchableOpacity>
+          </View>
           <Typography style={styles.subtitle}>
             Mini-apps curadas para o teu ecossistema de bem-estar
           </Typography>
