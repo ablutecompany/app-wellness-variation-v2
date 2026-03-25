@@ -205,6 +205,18 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     outputRange: [0, 1, 0]
   });
 
+  // Backdrop darkening: fades to black when Temas or Dados panels slide open
+  const themesBackdropOpacity = themesAnim.interpolate({
+    inputRange: [-width, 0],
+    outputRange: [0, 0.88],
+    extrapolate: 'clamp',
+  });
+  const dataBackdropOpacity = dataAnim.interpolate({
+    inputRange: [0, width],
+    outputRange: [0.88, 0],
+    extrapolate: 'clamp',
+  });
+
   // ── Switch Setup ──────────────────────────────────────────────────────────
   const switchAnim = useRef(new Animated.Value(0)).current; // 0 = UP, 160 = DOWN
   const isOff = useRef(false);
@@ -434,6 +446,16 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           />
         </Animated.View>
       </View>
+
+      {/* ── BACKDROP OVERLAY: darkens home when Temas/Dados are open ───── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
+      />
 
       <View {...mainPanResponder.panHandlers} style={styles.mainView}>
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
