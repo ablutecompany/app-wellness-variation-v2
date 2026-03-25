@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Star, Plus, ExternalLink } from 'lucide-react-native';
 import { Container, Typography } from '../components/Base';
 import { MINI_APP_CATALOG, getFeaturedApp } from '../miniapps/catalog';
-import { CATEGORY_LABELS, MiniAppManifest, MiniAppCategory } from '../miniapps/types';
+import { CATEGORY_LABELS, MiniAppManifest, MiniAppCategory, Permission, PERMISSION_LABELS } from '../miniapps/types';
 import { PermissionSheet } from '../miniapps/PermissionSheet';
 import { MiniAppContainer } from '../miniapps/MiniAppContainer';
 import { useStore } from '../store/useStore';
@@ -26,10 +26,102 @@ const CATEGORY_TABS: Array<{ key: 'all' | MiniAppCategory; label: string }> = [
   { key: 'longevity', label: 'Longevidade' },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// WebPermissionView — used on web instead of Modal-based PermissionSheet
+// ─────────────────────────────────────────────────────────────────────────────
+const WebPermissionView: React.FC<{
+  app: MiniAppManifest;
+  onClose: () => void;
+  onInstalled: () => void;
+}> = ({ app, onClose, onInstalled }) => {
+  const [accepting, setAccepting] = useState(false);
+  const { installApp, grantPermissions } = useStore();
+  const { logEvent } = useAnalytics();
+
+  const handleAccept = () => {
+    setAccepting(true);
+    grantPermissions(app.id, app.permissions);
+    installApp(app.id);
+    logEvent('APP_INSTALLED', app.id);
+    setTimeout(() => { setAccepting(false); onInstalled(); }, 350);
+  };
+
+  return (
+    <Container safe style={{ backgroundColor: '#05070A' }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
+        {/* Back */}
+        <TouchableOpacity onPress={onClose} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 32 }}>
+          <Typography style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>← Voltar</Typography>
+        </TouchableOpacity>
+
+        {/* App header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+          <View style={[wpStyles.iconCircle, { backgroundColor: app.iconBg, borderColor: app.iconColor + '40' }]}>
+            <Typography style={{ fontSize: 32, color: app.iconColor, fontWeight: '800' }}>{app.iconEmoji}</Typography>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Typography style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{app.name}</Typography>
+            <Typography style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 2 }}>{app.developer}</Typography>
+          </View>
+        </View>
+
+        {/* Description */}
+        <Typography style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, lineHeight: 22, marginBottom: 28 }}>
+          {app.description}
+        </Typography>
+
+        {/* Permissions */}
+        <Typography style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 14 }}>PERMISSÕES SOLICITADAS</Typography>
+        <View style={{ gap: 12, marginBottom: 32 }}>
+          {app.permissions.map((perm: Permission) => {
+            const info = PERMISSION_LABELS[perm];
+            return (
+              <View key={perm} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={wpStyles.permIcon}>
+                  <Typography style={{ fontSize: 18 }}>{info.icon}</Typography>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Typography style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{info.label}</Typography>
+                  <Typography style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>{info.desc}</Typography>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Trust note */}
+        <Typography style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, lineHeight: 18, marginBottom: 28 }}>
+          As tuas informações são partilhadas de forma encriptada apenas com esta aplicação certificada pela ablute_.
+        </Typography>
+
+        {/* Accept */}
+        <TouchableOpacity
+          onPress={handleAccept}
+          disabled={accepting}
+          style={[wpStyles.acceptBtn, { backgroundColor: app.iconColor, opacity: accepting ? 0.7 : 1 }]}
+        >
+          <Typography style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+            {accepting ? 'A instalar…' : 'Aceitar & Instalar'}
+          </Typography>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={{ marginTop: 12, alignItems: 'center', padding: 14 }}>
+          <Typography style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Cancelar</Typography>
+        </TouchableOpacity>
+      </ScrollView>
+    </Container>
+  );
+};
+
+const wpStyles = StyleSheet.create({
+  iconCircle: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  permIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+  acceptBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 export const AppsScreen = ({ navigation }: { navigation: any }) => {
   const [activeCategory, setActiveCategory] = useState<'all' | MiniAppCategory>('all');
   const [permSheet, setPermSheet] = useState<MiniAppManifest | null>(null);
-  // On web: active mini-app shown inline (no navigation)
   const [inlineApp, setInlineApp] = useState<MiniAppManifest | null>(null);
 
   const { installedAppIds, isAppInstalled, launchApp } = useStore();
@@ -41,14 +133,11 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
     ? MINI_APP_CATALOG
     : MINI_APP_CATALOG.filter((a) => a.category === activeCategory);
 
-  const handleAdd = (app: MiniAppManifest) => {
-    setPermSheet(app);
-  };
+  const handleAdd = (app: MiniAppManifest) => setPermSheet(app);
 
   const handleOpen = (app: MiniAppManifest) => {
     launchApp(app);
     if (Platform.OS === 'web') {
-      // Show inline on web instead of navigation
       setInlineApp(app);
     } else {
       navigation?.navigate('MiniApp', { app });
@@ -57,11 +146,27 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
 
   const handleInstalled = (app?: MiniAppManifest) => {
     setPermSheet(null);
-    // On web, immediately open after install
-    if (Platform.OS === 'web' && app) {
-      setTimeout(() => handleOpen(app), 200);
-    }
+    if (Platform.OS === 'web' && app) setTimeout(() => handleOpen(app), 200);
   };
+
+  // ── Web: page-swap early returns ──────────────────────────────────────────
+  if (Platform.OS === 'web' && inlineApp) {
+    return (
+      <MiniAppContainer
+        app={inlineApp}
+        navigation={{ goBack: () => setInlineApp(null) }}
+      />
+    );
+  }
+  if (Platform.OS === 'web' && permSheet) {
+    return (
+      <WebPermissionView
+        app={permSheet!}
+        onClose={() => setPermSheet(null)}
+        onInstalled={() => handleInstalled(permSheet ?? undefined)}
+      />
+    );
+  }
 
   return (
     <Container safe style={styles.container}>
@@ -268,24 +373,14 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* ── Permission Consent Sheet ── */}
-      {permSheet && (
+      {/* ── Permission Consent Sheet (native modal) ── */}
+      {permSheet && Platform.OS !== 'web' && (
         <PermissionSheet
           app={permSheet}
           visible={!!permSheet}
           onClose={() => setPermSheet(null)}
           onInstalled={() => handleInstalled(permSheet ?? undefined)}
         />
-      )}
-
-      {/* ── Inline Mini-App (web only) ── */}
-      {inlineApp && Platform.OS === 'web' && (
-        <View style={styles.inlineOverlay}>
-          <MiniAppContainer
-            app={inlineApp}
-            navigation={{ goBack: () => setInlineApp(null) }}
-          />
-        </View>
       )}
     </Container>
   );
