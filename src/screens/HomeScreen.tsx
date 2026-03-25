@@ -772,10 +772,20 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
         <Animated.View style={{ flex: 1, width: '100%', opacity: drawerInnerOpacity, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden' }}>
           <View style={{ zIndex: 10, width: '100%', backgroundColor: 'transparent' }}>
-            <View {...drawerPanResponder.panHandlers} style={styles.drawerHandleArea}>
+            <TouchableOpacity
+              {...(Platform.OS !== 'web' ? drawerPanResponder.panHandlers : {})}
+              style={styles.drawerHandleArea}
+              activeOpacity={Platform.OS === 'web' ? 0.7 : 1}
+              onPress={Platform.OS === 'web' ? () => {
+                const isDown = lastDrawerY.current >= DRAWER_DOWN / 2;
+                const toValue = isDown ? DRAWER_UP : DRAWER_DOWN;
+                Animated.spring(drawerAnim, { toValue, bounciness: 0, useNativeDriver: false })
+                  .start(() => { lastDrawerY.current = toValue; });
+              } : undefined}
+            >
               <View style={styles.drawerHandle} />
               <Typography variant="caption" style={styles.drawerTitle}>APP PLACE</Typography>
-            </View>
+            </TouchableOpacity>
 
             <Animated.View style={{ paddingHorizontal: 24, paddingBottom: 20 }}>
               <View style={styles.appGrid}>
