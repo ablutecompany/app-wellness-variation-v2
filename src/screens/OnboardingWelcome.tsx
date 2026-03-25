@@ -35,9 +35,16 @@ export const WelcomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
   const taglineOpacity = useRef(new Animated.Value(0)).current;
   const taglineY       = useRef(new Animated.Value(10)).current;
 
-  const goHome = () => navigation.navigate('Main', { screen: 'Home' });
+  const goHome = () => navigation.replace('Main', { screen: 'Home' });
 
   useEffect(() => {
+    // On web, useNativeDriver animations break (opacity stays 0, callback never fires)
+    // Skip straight to Main on web
+    if (Platform.OS === 'web') {
+      goHome();
+      return;
+    }
+
     Animated.sequence([
       // 1 — Logo fades + scales in
       Animated.parallel([
