@@ -448,14 +448,44 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       </View>
 
       {/* ── BACKDROP OVERLAY: darkens home when Temas/Dados are open ───── */}
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
-      />
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
-      />
+      {/* Temas backdrop — click to close panel on web */}
+      {Platform.OS === 'web' ? (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
+        >
+          <Animated.View
+            style={[StyleSheet.absoluteFillObject, { opacity: themesBackdropOpacity }]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => Animated.spring(themesAnim, { toValue: -width, useNativeDriver: true }).start()}
+            />
+          </Animated.View>
+        </Animated.View>
+      ) : (
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
+        />
+      )}
+      {/* Dados backdrop — click to close panel on web */}
+      {Platform.OS === 'web' ? (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFillObject}
+            activeOpacity={1}
+            onPress={() => Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start()}
+          />
+        </Animated.View>
+      ) : (
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
+        />
+      )}
 
       <View {...mainPanResponder.panHandlers} style={styles.mainView}>
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
