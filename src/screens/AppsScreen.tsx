@@ -5,15 +5,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Linking,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Star, Check, Plus, ExternalLink } from 'lucide-react-native';
+import { Star, Plus, ExternalLink } from 'lucide-react-native';
 import { Container, Typography } from '../components/Base';
 import { MINI_APP_CATALOG, getFeaturedApp } from '../miniapps/catalog';
 import { CATEGORY_LABELS, MiniAppManifest, MiniAppCategory } from '../miniapps/types';
 import { PermissionSheet } from '../miniapps/PermissionSheet';
+import { MiniAppContainer } from '../miniapps/MiniAppContainer';
 import { useStore } from '../store/useStore';
 import { useAnalytics } from '../miniapps/analytics';
 
@@ -29,6 +29,8 @@ const CATEGORY_TABS: Array<{ key: 'all' | MiniAppCategory; label: string }> = [
 export const AppsScreen = ({ navigation }: { navigation: any }) => {
   const [activeCategory, setActiveCategory] = useState<'all' | MiniAppCategory>('all');
   const [permSheet, setPermSheet] = useState<MiniAppManifest | null>(null);
+  // On web: active mini-app shown inline (no navigation)
+  const [inlineApp, setInlineApp] = useState<MiniAppManifest | null>(null);
 
   const { installedAppIds, isAppInstalled, launchApp } = useStore();
   const { logEvent } = useAnalytics();
@@ -46,14 +48,19 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
   const handleOpen = (app: MiniAppManifest) => {
     launchApp(app);
     if (Platform.OS === 'web') {
-      Linking.openURL(app.url);
+      // Show inline on web instead of navigation
+      setInlineApp(app);
     } else {
       navigation?.navigate('MiniApp', { app });
     }
   };
 
-  const handleInstalled = () => {
+  const handleInstalled = (app?: MiniAppManifest) => {
     setPermSheet(null);
+    // On web, immediately open after install
+    if (Platform.OS === 'web' && app) {
+      setTimeout(() => handleOpen(app), 200);
+    }
   };
 
   return (
@@ -267,8 +274,18 @@ export const AppsScreen = ({ navigation }: { navigation: any }) => {
           app={permSheet}
           visible={!!permSheet}
           onClose={() => setPermSheet(null)}
-          onInstalled={handleInstalled}
+          onInstalled={() => handleInstalled(permSheet ?? undefined)}
         />
+      )}
+
+      {/* ── Inline Mini-App (web only) ── */}
+      {inlineApp && Platform.OS === 'web' && (
+        <View style={styles.inlineOverlay}>
+          <MiniAppContainer
+            app={inlineApp}
+            navigation={{ goBack: () => setInlineApp(null) }}
+          />
+        </View>
       )}
     </Container>
   );
@@ -567,5 +584,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  inlineOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9998,
+    backgroundColor: '#05070A',
   },
 });
