@@ -22,9 +22,8 @@ export const MINI_APP_CATALOG: MiniAppManifest[] = [
     iconEmoji: '♀',
     iconColor: '#FF6FBA',
     iconBg: 'rgba(255, 111, 186, 0.12)',
-    // Production URL – swap for your Vercel deployment URL when available
-    // For local dev on iOS simulator, use: 'http://localhost:5173'
-    url: 'https://fem-health-ablute.vercel.app',
+    // Deployed to Vercel — confirmed URL from project config
+    url: 'https://ablute-femmhealth.vercel.app',
     permissions: ['PROFILE_READ', 'CYCLE_DATA_READ', 'NOTIFICATIONS'],
     version: '1.0.0',
     featured: true,
