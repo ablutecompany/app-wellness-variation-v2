@@ -25,7 +25,12 @@
       "usesCleartextTraffic": true
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "splash": {
+        "backgroundColor": "transparent",
+        "resizeMode": "contain",
+        "image": null
+      }
     },
     "plugins": [
       "expo-font"
