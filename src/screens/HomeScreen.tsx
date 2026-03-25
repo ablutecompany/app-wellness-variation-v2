@@ -8,7 +8,7 @@ import { HistoricoModal } from '../components/HistoricoModal';
 import { Utensils, Zap, SlidersHorizontal, Activity, Database, Smartphone, X, User, ChevronRight, Menu, Battery, Heart, Scale, Droplets, Target, Settings, RefreshCw, Moon, Droplet, Brain, ChevronsDown, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Video, ResizeMode } from 'expo-av';
+// expo-av: loaded via require() only on native to avoid web crash
 import { getAppById } from '../miniapps/catalog';
 import { useStore } from '../store/useStore';
 
@@ -382,17 +382,21 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     <Container safe style={styles.container}>
       {/* ── FULL SCREEN BACKGROUND VIDEO ───────────────────────────────── */}
       <View style={StyleSheet.absoluteFillObject}>
-        {Platform.OS !== 'web' && (
-          <Video
-            source={require('../../assets/video (4).mp4')}
-            style={StyleSheet.absoluteFillObject}
-            resizeMode={ResizeMode.COVER}
-            rate={0.05}
-            shouldPlay
-            isLooping
-            isMuted
-          />
-        )}
+        {Platform.OS !== 'web' && (() => {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const { Video: NativeVideo, ResizeMode: NativeResizeMode } = require('expo-av');
+          return (
+            <NativeVideo
+              source={require('../../assets/video (4).mp4')}
+              style={StyleSheet.absoluteFillObject}
+              resizeMode={NativeResizeMode.COVER}
+              rate={0.05}
+              shouldPlay
+              isLooping
+              isMuted
+            />
+          );
+        })()}
         {Platform.OS === 'web' && (
           <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#05070A' }]} />
         )}
@@ -461,29 +465,39 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                       <View style={[styles.pulseContainer, { marginBottom: 0 }]} pointerEvents="box-none">
                         {/* Outer dynamically playing border */}
                         <View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}>
-                          <Video
-                            source={require('../../assets/video (2).mp4')}
-                            style={{ position: 'absolute', width: 240, height: 240, opacity: 1 }}
-                            resizeMode={ResizeMode.COVER}
-                            shouldPlay
-                            isLooping
-                            isMuted
-                            pointerEvents="none"
-                          />
+                        {Platform.OS !== 'web' && (() => {
+                          const { Video: NV, ResizeMode: RM } = require('expo-av');
+                          return (
+                            <NV
+                              source={require('../../assets/video (2).mp4')}
+                              style={{ position: 'absolute', width: 240, height: 240, opacity: 1 }}
+                              resizeMode={RM.COVER}
+                              shouldPlay
+                              isLooping
+                              isMuted
+                              pointerEvents="none"
+                            />
+                          );
+                        })()}
                         </View>
 
                         {/* Inner primary holographic content */}
                         <View style={{ position: 'absolute', width: 223, height: 223, borderRadius: 111.5, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}>
                           <BlurView intensity={30} tint="dark" style={[StyleSheet.absoluteFill, { borderRadius: 111.5, overflow: 'hidden' }]} />
-                          <Video
-                            source={require('../../assets/video (3).mp4')}
-                            style={{ position: 'absolute', width: 223, height: 223, opacity: 0.9 }}
-                            resizeMode={ResizeMode.COVER}
-                            shouldPlay
-                            isLooping
-                            isMuted
-                            pointerEvents="none"
-                          />
+                          {Platform.OS !== 'web' && (() => {
+                            const { Video: NV, ResizeMode: RM } = require('expo-av');
+                            return (
+                              <NV
+                                source={require('../../assets/video (3).mp4')}
+                                style={{ position: 'absolute', width: 223, height: 223, opacity: 0.9 }}
+                                resizeMode={RM.COVER}
+                                shouldPlay
+                                isLooping
+                                isMuted
+                                pointerEvents="none"
+                              />
+                            );
+                          })()}
                           <Image
                             source={require('../../assets/hologram_body.png')}
                             style={{ position: 'absolute', width: 223, height: 223, opacity: 0.3 }}
@@ -725,14 +739,19 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       >
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: drawerBgOpacity }]}>
           <View style={[StyleSheet.absoluteFillObject, { borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden' }]}>
-            <Video
-              source={require('../../assets/video.mp4')}
-              style={StyleSheet.absoluteFillObject}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping
-              isMuted
-            />
+            {Platform.OS !== 'web' && (() => {
+              const { Video: NV, ResizeMode: RM } = require('expo-av');
+              return (
+                <NV
+                  source={require('../../assets/video.mp4')}
+                  style={StyleSheet.absoluteFillObject}
+                  resizeMode={RM.COVER}
+                  shouldPlay
+                  isLooping
+                  isMuted
+                />
+              );
+            })()}
             <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.85)' }]} pointerEvents="none" />
           </View>
           <View style={[StyleSheet.absoluteFillObject, styles.drawerContent, { backgroundColor: 'transparent' }]} pointerEvents="none" />
