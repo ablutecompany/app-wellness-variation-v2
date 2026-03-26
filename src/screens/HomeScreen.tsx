@@ -219,6 +219,32 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     extrapolate: 'clamp',
   });
 
+  // ── Home screen "transport" effect: shifts sideways as panels open ─────────
+  // When Temas (left panel) opens, home moves right. When Dados opens, home moves left.
+  const homeShiftFromThemes = themesAnim.interpolate({
+    inputRange: [-width, 0],
+    outputRange: [0, width],
+    extrapolate: 'clamp',
+  });
+  const homeShiftFromData = dataAnim.interpolate({
+    inputRange: [0, width],
+    outputRange: [-width, 0],
+    extrapolate: 'clamp',
+  });
+  const homeShiftX = Animated.add(homeShiftFromThemes, homeShiftFromData);
+
+  // Slight scale-down effect to add depth feel (1 → 0.88 as panel opens)
+  const homeShrinkFromThemes = themesAnim.interpolate({
+    inputRange: [-width, 0],
+    outputRange: [1, 0.88],
+    extrapolate: 'clamp',
+  });
+  const homeShrinkFromData = dataAnim.interpolate({
+    inputRange: [0, width],
+    outputRange: [0.88, 1],
+    extrapolate: 'clamp',
+  });
+
   // Mutable refs for edge gesture callbacks (avoid stale closures in PanResponder)
   const openThemesRef = useRef<() => void>(() => {});
   const openDataRef = useRef<() => void>(() => {});
@@ -553,7 +579,18 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         />
       )}
 
-      <View {...mainPanResponder.panHandlers} style={styles.mainView}>
+      <Animated.View
+        {...mainPanResponder.panHandlers}
+        style={[
+          styles.mainView,
+          {
+            transform: [
+              { translateX: homeShiftX },
+              { scale: themesOpen ? homeShrinkFromThemes : homeShrinkFromData },
+            ],
+          },
+        ]}
+      >
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
         <View style={styles.header}>
           <BrandLogo size="medium" />
@@ -676,7 +713,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </TouchableOpacity>
 
         {/* Trigger inside drawer now handles interactions */}
-      </View>
+      </Animated.View>
 
 
       {/* ── SIDE PANEL: THEMES (LEFT) ─────────────────────────────────────── */}
