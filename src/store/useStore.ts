@@ -1,7 +1,30 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 import { MiniAppManifest, Permission } from '../miniapps/types';
+
+// ── Simple localStorage helpers (web-only, fails silently) ──────────────────
+const STORAGE_KEY = 'ablute-app-store';
+
+function loadFromStorage(): { installedAppIds: string[]; grantedPermissions: Record<string, Permission[]> } {
+  try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
+  } catch {}
+  return { installedAppIds: [], grantedPermissions: {} };
+}
+
+function saveToStorage(installedAppIds: string[], grantedPermissions: Record<string, Permission[]>) {
+  try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ installedAppIds, grantedPermissions }));
+    }
+  } catch {}
+}
+
+// ── Load persisted data once at startup ────────────────────────────────────
+const persisted = loadFromStorage();
 
 interface UserProfile {
   name: string;
@@ -62,73 +85,61 @@ interface AppState {
   hasGrantedPermissions: (id: string) => boolean;
 }
 
-export const useStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      // ── Core State ────────────────────────────────────────────────────────
-      user: null,
-      measurements: [],
-      themeScores: [],
-      globalScore: 0,
-      isNfcLoading: false,
-      isMeasuring: false,
-      credits: 10,
+export const useStore = create<AppState>((set, get) => ({
+  // ── Core State ─────────────────────────────────────────────────────────────
+  user: null,
+  measurements: [],
+  themeScores: [],
+  globalScore: 0,
+  isNfcLoading: false,
+  isMeasuring: false,
+  credits: 10,
 
-      // ── Mini-App State ────────────────────────────────────────────────────
-      installedAppIds: [],
-      activeApp: null,
-      grantedPermissions: {},
+  // ── Mini-App State (hydrated from localStorage) ────────────────────────────
+  installedAppIds: persisted.installedAppIds,
+  activeApp: null,
+  grantedPermissions: persisted.grantedPermissions,
 
-      // ── Core Actions ──────────────────────────────────────────────────────
-      setUser: (user) => set({ user }),
-      addMeasurement: (measurement) =>
-        set((state) => ({ measurements: [measurement, ...state.measurements] })),
-      setThemeScores: (themeScores) => set({ themeScores }),
-      setGlobalScore: (score) => set({ globalScore: score }),
-      setNfcLoading: (loading) => set({ isNfcLoading: loading }),
-      setIsMeasuring: (isMeasuring) => set({ isMeasuring }),
-      setCredits: (credits) => set({ credits }),
+  // ── Core Actions ───────────────────────────────────────────────────────────
+  setUser: (user) => set({ user }),
+  addMeasurement: (measurement) =>
+    set((state) => ({ measurements: [measurement, ...state.measurements] })),
+  setThemeScores: (themeScores) => set({ themeScores }),
+  setGlobalScore: (score) => set({ globalScore: score }),
+  setNfcLoading: (loading) => set({ isNfcLoading: loading }),
+  setIsMeasuring: (isMeasuring) => set({ isMeasuring }),
+  setCredits: (credits) => set({ credits }),
 
-      // ── Mini-App Actions ──────────────────────────────────────────────────
-      installApp: (id) =>
-        set((state) => ({
-          installedAppIds: state.installedAppIds.includes(id)
-            ? state.installedAppIds
-            : [...state.installedAppIds, id],
-        })),
-
-      uninstallApp: (id) =>
-        set((state) => ({
-          installedAppIds: state.installedAppIds.filter((a) => a !== id),
-          grantedPermissions: Object.fromEntries(
-            Object.entries(state.grantedPermissions).filter(([k]) => k !== id)
-          ),
-        })),
-
-      launchApp: (app) => set({ activeApp: app }),
-      closeApp: () => set({ activeApp: null }),
-
-      grantPermissions: (appId, perms) =>
-        set((state) => ({
-          grantedPermissions: { ...state.grantedPermissions, [appId]: perms },
-        })),
-
-      isAppInstalled: (id) => get().installedAppIds.includes(id),
-      hasGrantedPermissions: (id) => !!get().grantedPermissions[id],
+  // ── Mini-App Actions ────────────────────────────────────────────────────────
+  installApp: (id) =>
+    set((state) => {
+      const next = state.installedAppIds.includes(id)
+        ? state.installedAppIds
+        : [...state.installedAppIds, id];
+      saveToStorage(next, state.grantedPermissions);
+      return { installedAppIds: next };
     }),
-    {
-      name: 'ablute-app-store',
-      // Web: localStorage | Native: AsyncStorage (lazy require to avoid crash)
-      storage: createJSONStorage(() =>
-        Platform.OS === 'web'
-          ? localStorage
-          : require('@react-native-async-storage/async-storage').default
-      ),
-      // Only persist mini-app data — core session state stays ephemeral
-      partialize: (state) => ({
-        installedAppIds: state.installedAppIds,
-        grantedPermissions: state.grantedPermissions,
-      }),
-    }
-  )
-);
+
+  uninstallApp: (id) =>
+    set((state) => {
+      const next = state.installedAppIds.filter((a) => a !== id);
+      const perms = Object.fromEntries(
+        Object.entries(state.grantedPermissions).filter(([k]) => k !== id)
+      );
+      saveToStorage(next, perms);
+      return { installedAppIds: next, grantedPermissions: perms };
+    }),
+
+  launchApp: (app) => set({ activeApp: app }),
+  closeApp: () => set({ activeApp: null }),
+
+  grantPermissions: (appId, perms) =>
+    set((state) => {
+      const next = { ...state.grantedPermissions, [appId]: perms };
+      saveToStorage(state.installedAppIds, next);
+      return { grantedPermissions: next };
+    }),
+
+  isAppInstalled: (id) => get().installedAppIds.includes(id),
+  hasGrantedPermissions: (id) => !!get().grantedPermissions[id],
+}));
