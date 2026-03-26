@@ -171,7 +171,8 @@ const MOCK_THEMES = [
 
 export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { width, height } = useWindowDimensions();
-  const { installedAppIds, launchApp } = useStore();
+  const { installedAppIds, launchApp, uninstallApp } = useStore();
+
   const themesFlatListRef = useRef<FlatList>(null);
   const themesPanelHeight = height;
   const [showProfile, setShowProfile] = useState(false);
@@ -1028,33 +1029,44 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                        }
                      }}
                    >
-                    <View style={[styles.appIconContainer, {
-                      backgroundColor: 'rgba(5, 10, 20, 0.5)',
-                      shadowColor: '#fff', // brilho externo suave
-                      shadowOpacity: 0.15,
-                      shadowRadius: 12,
-                      shadowOffset: { width: 0, height: 0 }
-                    }]}>
+                    <View style={{ position: 'relative' }}>
+                      <View style={[styles.appIconContainer, {
+                        backgroundColor: 'rgba(5, 10, 20, 0.5)',
+                        shadowColor: '#fff',
+                        shadowOpacity: 0.15,
+                        shadowRadius: 12,
+                        shadowOffset: { width: 0, height: 0 }
+                      }]}>
 
-                        {/* Curvatura 3D nas bordas (reflexo em cima, sombra funda em baixo) */}
-                        <LinearGradient
-                          colors={['rgba(255,255,255,0.35)', 'transparent', 'rgba(0,0,0,0.85)']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={[StyleSheet.absoluteFillObject, { borderRadius: 20, overflow: 'hidden' }]}
-                          pointerEvents="none"
-                        />
+                          {/* Curvatura 3D nas bordas */}
+                          <LinearGradient
+                            colors={['rgba(255,255,255,0.35)', 'transparent', 'rgba(0,0,0,0.85)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={[StyleSheet.absoluteFillObject, { borderRadius: 20, overflow: 'hidden' }]}
+                            pointerEvents="none"
+                          />
 
-                        {/* Luz interna (brilho atravessando o cristal) */}
-                        <LinearGradient
-                          colors={['transparent', 'rgba(255,255,255,0.2)', 'transparent']}
-                          start={{ x: 0.2, y: 0 }}
-                          end={{ x: 0.8, y: 1 }}
-                          style={[StyleSheet.absoluteFillObject, { borderRadius: 20, overflow: 'hidden' }]}
-                          pointerEvents="none"
-                        />
+                          {/* Luz interna */}
+                          <LinearGradient
+                            colors={['transparent', 'rgba(255,255,255,0.2)', 'transparent']}
+                            start={{ x: 0.2, y: 0 }}
+                            end={{ x: 0.8, y: 1 }}
+                            style={[StyleSheet.absoluteFillObject, { borderRadius: 20, overflow: 'hidden' }]}
+                            pointerEvents="none"
+                          />
 
-                      <View style={{ zIndex: 10 }}>{drawerApp.icon}</View>
+                        <View style={{ zIndex: 10 }}>{drawerApp.icon}</View>
+                      </View>
+                      {installed && (
+                        <TouchableOpacity
+                          onPress={(e: any) => { e?.stopPropagation?.(); uninstallApp(drawerApp.id); }}
+                          style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(255,50,50,0.9)', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Typography style={{ color: '#fff', fontSize: 11, fontWeight: '800', lineHeight: 13 }}>×</Typography>
+                        </TouchableOpacity>
+                      )}
                     </View>
                     <Typography variant="caption" style={[styles.appName, { textAlign: 'center', lineHeight: 12 }]}>{drawerApp.name}</Typography>
                   </TouchableOpacity>
