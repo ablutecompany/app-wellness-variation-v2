@@ -437,13 +437,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: () => false,
       onPanResponderRelease: (_, { x0, dx, dy }) => {
-        // Left Edge Swipe -> Themes
+        // Left Edge Swipe -> Themes (via ref so mutual exclusion guard applies)
         if (x0 < 60 && dx > 80) {
-          Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
+          openThemesRef.current();
         }
-        // Right Edge Swipe -> Data
+        // Right Edge Swipe -> Data (via ref so mutual exclusion guard applies)
         if (x0 > width - 60 && dx < -80) {
-          Animated.spring(dataAnim, { toValue: 0, useNativeDriver: true }).start();
+          openDataRef.current();
         }
         // Bottom Swipe Up -> App Drawer
         if (dy < -60) {
@@ -466,21 +466,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       const dx = e.changedTouches[0].clientX - touchStartX;
       const dy = e.changedTouches[0].clientY - touchStartY;
       const screenW = window.innerWidth;
-      const screenH = window.innerHeight;
-      // Left edge swipe right → open Temas
+      // Left edge swipe right → open Temas (via ref for mutual exclusion)
       if (touchStartX < 60 && dx > 60 && Math.abs(dy) < 80) {
-        setThemesOpen(true);
-        Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
+        openThemesRef.current();
       }
-      // Right edge swipe left → open Dados
+      // Right edge swipe left → open Dados (via ref for mutual exclusion)
       if (touchStartX > screenW - 60 && dx < -60 && Math.abs(dy) < 80) {
-        setDataOpen(true);
-        Animated.spring(dataAnim, { toValue: 0, useNativeDriver: true }).start();
-      }
-      // Bottom area swipe up → open drawer
-      if (touchStartY > screenH - 160 && dy < -60 && Math.abs(dx) < 80) {
-        Animated.spring(drawerAnim, { toValue: DRAWER_UP, bounciness: 0, useNativeDriver: false })
-          .start(() => { lastDrawerY.current = DRAWER_UP; });
+        openDataRef.current();
       }
     };
     window.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -488,6 +480,40 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     return () => {
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
+
+  // ── Drawer handle DOM touch events (for reliable mobile web drag) ─────────
+  const drawerHandleRef = useRef<any>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const el = drawerHandleRef.current;
+    if (!el) return;
+    let startY = 0;
+    let startDrawerY = 0;
+    const onTStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      startDrawerY = lastDrawerY.current;
+    };
+    const onTMove = (e: TouchEvent) => {
+      const dy = e.touches[0].clientY - startY;
+      const newY = Math.max(0, Math.min(DRAWER_DOWN, startDrawerY + dy));
+      drawerAnim.setValue(newY);
+    };
+    const onTEnd = (e: TouchEvent) => {
+      const dy = e.changedTouches[0].clientY - startY;
+      const finalY = startDrawerY + dy;
+      const toValue = finalY < DRAWER_DOWN / 2 ? DRAWER_UP : DRAWER_DOWN;
+      Animated.spring(drawerAnim, { toValue, bounciness: 0, useNativeDriver: false })
+        .start(() => { lastDrawerY.current = toValue; });
+    };
+    el.addEventListener('touchstart', onTStart, { passive: true });
+    el.addEventListener('touchmove', onTMove, { passive: true });
+    el.addEventListener('touchend', onTEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTStart);
+      el.removeEventListener('touchmove', onTMove);
+      el.removeEventListener('touchend', onTEnd);
     };
   }, []);
 
@@ -962,7 +988,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         <Animated.View style={{ flex: 1, width: '100%', opacity: drawerInnerOpacity, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden' }}>
           <View style={{ zIndex: 10, width: '100%', backgroundColor: 'transparent' }}>
             <TouchableOpacity
-              {...(Platform.OS !== 'web' ? drawerPanResponder.panHandlers : {})}
+              ref={drawerHandleRef}
+              {...drawerPanResponder.panHandlers}
               style={styles.drawerHandleArea}
               activeOpacity={Platform.OS === 'web' ? 0.7 : 1}
               onPress={Platform.OS === 'web' ? () => {
