@@ -305,7 +305,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         }
         Animated.spring(switchAnim, {
           toValue,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
           bounciness: 4,
           speed: 14,
         }).start(({ finished }) => {
@@ -547,23 +547,31 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </Animated.View>
       </View>
 
-      {/* ── BACKDROP: only rendered (and pressable) when a panel is open ── */}
+      {/* ── BACKDROP: darkens home and allows tap-to-close on home side only ── */}
       {themesOpen && (
         <Animated.View
           style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
+          pointerEvents="box-none"
         >
-          {Platform.OS === 'web' && (
-            <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={closeThemes} />
-          )}
+          {/* Only RIGHT half is pressable — left is the panel, right is the shifted home */}
+          <TouchableOpacity
+            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '50%' }}
+            activeOpacity={1}
+            onPress={closeThemes}
+          />
         </Animated.View>
       )}
       {dataOpen && (
         <Animated.View
           style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
+          pointerEvents="box-none"
         >
-          {Platform.OS === 'web' && (
-            <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={closeData} />
-          )}
+          {/* Only LEFT half is pressable — right is the panel, left is the shifted home */}
+          <TouchableOpacity
+            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' }}
+            activeOpacity={1}
+            onPress={closeData}
+          />
         </Animated.View>
       )}
 
