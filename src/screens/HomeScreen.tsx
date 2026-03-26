@@ -1297,6 +1297,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderLeftWidth: 0,
     borderColor: 'rgba(115, 188, 255, 0.2)',
+    zIndex: 500,
   },
   rightEdgeHandle: {
     position: 'absolute',
@@ -1312,6 +1313,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRightWidth: 0,
     borderColor: 'rgba(0, 212, 170, 0.2)',
+    zIndex: 500,
   },
   edgePill: {
     width: 3,
