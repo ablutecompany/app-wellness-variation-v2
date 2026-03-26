@@ -251,6 +251,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   // ── Panel open/close helpers (sync animation + state for web backdrop) ────
   const openThemes = () => {
+    if (dataOpen) return; // prevent overlap: don't open if Dados is open
     setThemesOpen(true);
     Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
   };
@@ -258,6 +259,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     Animated.spring(themesAnim, { toValue: -width, useNativeDriver: true }).start(() => setThemesOpen(false));
   };
   const openData = () => {
+    if (themesOpen) return; // prevent overlap: don't open if Temas is open
     setDataOpen(true);
     Animated.spring(dataAnim, { toValue: 0, useNativeDriver: true }).start();
   };
@@ -565,14 +567,14 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </Animated.View>
       )}
 
-      {/* ── WEB EDGE GESTURE ZONES ─────────────────────────────────────────── */}
-      {Platform.OS === 'web' && !themesOpen && (
+      {/* ── WEB EDGE GESTURE ZONES (only when both panels closed) ──────────── */}
+      {Platform.OS === 'web' && !themesOpen && !dataOpen && (
         <View
           {...leftEdgeGesture.panHandlers}
           style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 60, zIndex: 600 }}
         />
       )}
-      {Platform.OS === 'web' && !dataOpen && (
+      {Platform.OS === 'web' && !dataOpen && !themesOpen && (
         <View
           {...rightEdgeGesture.panHandlers}
           style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 60, zIndex: 600 }}
