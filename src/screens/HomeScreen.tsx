@@ -180,6 +180,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [isNfcScanning, setIsNfcScanning] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
   const [bioTab, setBioTab] = useState(0);
+  const [themesOpen, setThemesOpen] = useState(false);
+  const [dataOpen, setDataOpen] = useState(false);
   // Profile Form State
   const [profileName, setProfileName] = useState('Atleta Base');
   const [profileAge, setProfileAge] = useState('34');
@@ -216,6 +218,22 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     outputRange: [0.88, 0],
     extrapolate: 'clamp',
   });
+
+  // ── Panel open/close helpers (sync animation + state for web backdrop) ────
+  const openThemes = () => {
+    setThemesOpen(true);
+    Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
+  };
+  const closeThemes = () => {
+    Animated.spring(themesAnim, { toValue: -width, useNativeDriver: true }).start(() => setThemesOpen(false));
+  };
+  const openData = () => {
+    setDataOpen(true);
+    Animated.spring(dataAnim, { toValue: 0, useNativeDriver: true }).start();
+  };
+  const closeData = () => {
+    Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start(() => setDataOpen(false));
+  };
 
   // ── Switch Setup ──────────────────────────────────────────────────────────
   const switchAnim = useRef(new Animated.Value(0)).current; // 0 = UP, 160 = DOWN
@@ -447,44 +465,24 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </Animated.View>
       </View>
 
-      {/* ── BACKDROP OVERLAY: darkens home when Temas/Dados are open ───── */}
-      {/* Temas backdrop — click to close panel on web */}
-      {Platform.OS === 'web' ? (
+      {/* ── BACKDROP: only rendered (and pressable) when a panel is open ── */}
+      {themesOpen && (
         <Animated.View
           style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
         >
-          <Animated.View
-            style={[StyleSheet.absoluteFillObject, { opacity: themesBackdropOpacity }]}
-          >
-            <TouchableOpacity
-              style={StyleSheet.absoluteFillObject}
-              activeOpacity={1}
-              onPress={() => Animated.spring(themesAnim, { toValue: -width, useNativeDriver: true }).start()}
-            />
-          </Animated.View>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={closeThemes} />
+          )}
         </Animated.View>
-      ) : (
-        <Animated.View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: themesBackdropOpacity, zIndex: 10 }]}
-        />
       )}
-      {/* Dados backdrop — click to close panel on web */}
-      {Platform.OS === 'web' ? (
+      {dataOpen && (
         <Animated.View
           style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
         >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFillObject}
-            activeOpacity={1}
-            onPress={() => Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start()}
-          />
+          {Platform.OS === 'web' && (
+            <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={closeData} />
+          )}
         </Animated.View>
-      ) : (
-        <Animated.View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', opacity: dataBackdropOpacity, zIndex: 10 }]}
-        />
       )}
 
       <View {...mainPanResponder.panHandlers} style={styles.mainView}>
@@ -596,7 +594,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         {/* ── LEFT EDGE HANDLE: THEMES ──────────────────────────────────────── */}
         <TouchableOpacity
           style={styles.leftEdgeHandle}
-          onPress={() => Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start()}
+          onPress={openThemes}
         >
           <Typography variant="caption" style={styles.edgeLabel}>TEMAS</Typography>
         </TouchableOpacity>
@@ -604,7 +602,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         {/* ── RIGHT EDGE HANDLE: BIODATA ────────────────────────────────────── */}
         <TouchableOpacity
           style={styles.rightEdgeHandle}
-          onPress={() => Animated.spring(dataAnim, { toValue: 0, useNativeDriver: true }).start()}
+          onPress={openData}
         >
           <Typography variant="caption" style={styles.edgeLabel}>DADOS</Typography>
         </TouchableOpacity>
@@ -624,7 +622,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
               <Typography style={styles.themePanelTagline}>O que o teu corpo está a dizer hoje.</Typography>
             </View>
             <TouchableOpacity
-              onPress={() => Animated.spring(themesAnim, { toValue: -width, useNativeDriver: true }).start()}
+              onPress={closeThemes}
               style={styles.themePanelClose}
             >
               <X size={20} color="rgba(255,255,255,0.6)" />
