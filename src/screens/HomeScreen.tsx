@@ -746,8 +746,9 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                           />
 
                           {/* Floating CTA over Hologram */}
-                          <View style={{ position: 'absolute', zIndex: 10 }}>
-                            <Typography style={{ color: '#00F2FF', fontSize: 10, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center' }}>Deslize para atualizar</Typography>
+                          <View style={{ position: 'absolute', zIndex: 10, alignItems: 'center' }}>
+                            <Typography style={{ color: '#FFF', fontSize: 9, fontWeight: '600', letterSpacing: 1 }}>deslize para</Typography>
+                            <Typography style={{ color: '#FFF', fontSize: 11, fontWeight: '900', letterSpacing: 1.5, marginTop: -2 }}>ATUALIZAR</Typography>
                           </View>
                           <LinearGradient
                             colors={['rgba(0, 242, 255, 0.2)', 'rgba(0, 212, 170, 0.1)']}
