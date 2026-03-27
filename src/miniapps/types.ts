@@ -14,7 +14,10 @@ export type Permission =
   | 'PROFILE_READ'
   | 'HEALTH_DATA_READ'
   | 'NOTIFICATIONS'
-  | 'CYCLE_DATA_READ';
+  | 'CYCLE_DATA_READ'
+  | 'NUTRITION_DATA_READ'
+  | 'SLEEP_DATA_READ'
+  | 'ACTIVITY_DATA_READ';
 
 export const PERMISSION_LABELS: Record<Permission, { label: string; desc: string; icon: string }> = {
   PROFILE_READ: {
@@ -36,6 +39,21 @@ export const PERMISSION_LABELS: Record<Permission, { label: string; desc: string
     label: 'Dados do ciclo',
     desc: 'Ciclo menstrual, sintomas e padrões hormonais',
     icon: '🌙',
+  },
+  NUTRITION_DATA_READ: {
+    label: 'Dados de nutrição',
+    desc: 'Refeições, macros e preferências alimentares',
+    icon: '🥗',
+  },
+  SLEEP_DATA_READ: {
+    label: 'Dados de sono',
+    desc: 'Padrões de sono, fases e qualidade',
+    icon: '💤',
+  },
+  ACTIVITY_DATA_READ: {
+    label: 'Dados de atividade',
+    desc: 'Exercício, passos e dados de movimento',
+    icon: '🏃',
   },
 };
 

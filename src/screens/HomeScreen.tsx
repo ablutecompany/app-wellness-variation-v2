@@ -23,6 +23,8 @@ const BlurView = Platform.OS === 'web'
   : (() => { const { BlurView: BV } = require('expo-blur'); return BV; })();
 
 import { MINI_APP_CATALOG } from '../miniapps/catalog';
+import { MiniAppContainer } from '../miniapps/MiniAppContainer';
+import { MiniAppManifest } from '../miniapps/types';
 import { useStore } from '../store/useStore';
 
 const BIO_CATEGORIES = [
@@ -189,6 +191,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [profileWeight, setProfileWeight] = useState('78');
   const [profileHeight, setProfileHeight] = useState('180');
   const [profileGoal, setProfileGoal] = useState('Performance');
+  // ── Inline mini-app for web (same pattern as AppsScreen) ─────────────────
+  const [inlineApp, setInlineApp] = useState<MiniAppManifest | null>(null);
 
   // ── Animation States ──────────────────────────────────────────────────────
   const themesAnim = useRef(new Animated.Value(-width)).current;
@@ -549,6 +553,16 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       console.warn('[HomeScreen] MiniApp não encontrada:', appId);
     }
   };
+
+  // ── Web: render mini-app inline (iframe via MiniAppContainer.web.tsx) ─────
+  if (Platform.OS === 'web' && inlineApp) {
+    return (
+      <MiniAppContainer
+        app={inlineApp}
+        navigation={{ goBack: () => setInlineApp(null) }}
+      />
+    );
+  }
 
   return (
     <Container safe style={styles.container}>
@@ -1023,7 +1037,11 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                      onPress={() => {
                        if (manifest && installed) {
                          launchApp(manifest);
-                         navigation?.navigate('MiniApp', { app: manifest });
+                          if (Platform.OS === 'web') {
+                            setInlineApp(manifest);
+                          } else {
+                            navigation?.navigate('MiniApp', { app: manifest });
+                          }
                        }
                        // not installed → do nothing; install from the list below
                      }}
