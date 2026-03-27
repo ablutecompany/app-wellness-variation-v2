@@ -7,6 +7,7 @@ import { ThemeCard } from '../components/ThemeCard';
 import { HistoricoModal } from '../components/HistoricoModal';
 import { Utensils, Zap, SlidersHorizontal, Activity, Database, Smartphone, X, User, ChevronRight, Menu, Battery, Heart, Scale, Droplets, Target, Settings, RefreshCw, Moon, Droplet, Brain, ChevronsDown, Sparkles } from 'lucide-react-native';
 // expo-linear-gradient and expo-blur: use require() guards to avoid web crash
+// v2.1 - web inline mini-app launch fix
 
 // Web-safe LinearGradient fallback
 const LinearGradient = Platform.OS === 'web'
