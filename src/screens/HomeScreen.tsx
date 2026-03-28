@@ -749,16 +749,19 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           const glowColorRGB = isCritical ? '138, 21, 21' : '255, 215, 0'; // Vermelho sangue profundo/escuro
           const glowColorHex = isCritical ? '#8A1515' : '#FFD700';
 
-          // Fator de saúde (1.0 = Max radiance [0 dias], 0.0 = Min radiance [8+ dias])
+          // Fator de saúde (1.0 = Max radiance [0 dias: "Pos 7"], 0.0 = Min radiance [8+ dias: "Pos 1 original"])
           const healthFactor = Math.max(0, 1 - (diasSemExame / 8));
           
-          // Multiplicador de "Posição" (Pos 7 = 1.0, Pos 1 = 0.2)
-          const radMultiplier = 0.2 + (healthFactor * 0.8);
+          // Memória Exata da Posição 1: Base era 20, Expansiva era 100.
+          // Interpolação linear da Pos 1 (0.0) para Pos 7 (1.0)
+          const radiusBase = 20 + (healthFactor * 40);      // Pos 1: 20  | Pos 7: 60
+          const radiusMedia = 100 + (healthFactor * 100);   // Pos 1: 100 | Pos 7: 200
+          const radiusExtrema = healthFactor * 400;         // Pos 1: 0   | Pos 7: 400
+          const radiusGalatica = healthFactor * 700;        // Pos 1: 0   | Pos 7: 700
 
-          // Animação da intensidade (degradê a decair também com o healthFactor e pulsar menos intenso)
-          // Se Pos 7: 0.75 -> 1.0. Se Pos 1: 0.3 -> 0.6
+          // Animação da intensidade (Na Pos 7 não encolhe muito: 0.75. Na Pos 1 encolhia até 0.3)
           const minOpacity = 0.3 + (healthFactor * 0.45);
-          const maxOpacity = 0.6 + (healthFactor * 0.40);
+          const maxOpacity = 1.0;
 
           const glowOpacityAnim = pulseAnim.interpolate({
             inputRange: [1, 1.2],
@@ -769,7 +772,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
             <Animated.View style={[styles.centerContainer, { transform: [{ translateY: centerContentY }, { scale: 0.52 }] }]}>
               <View style={{ width: 240, height: 410, justifyContent: 'center', alignItems: 'center' }}>
                 
-                {/* 1) Luz Base Fixa (Afroxa consoante o rácio) */}
+                {/* 1) Luz Base Fixa (Afasta e aperta rigorosamente segundo as Posições 1-7) */}
                 <View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -778,7 +781,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 1, 
-                  shadowRadius: 60 * radMultiplier,
+                  shadowRadius: radiusBase,
                   elevation: 15
                 }} pointerEvents="none" />
 
@@ -791,12 +794,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 1, 
-                  shadowRadius: 200 * radMultiplier,
+                  shadowRadius: radiusMedia,
                   elevation: 40,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
 
-                {/* 3) Luz Expansiva Extrema */}
+                {/* 3) Luz Expansiva Extrema (Anula-se a zero se Pos 1) */}
                 <Animated.View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -804,13 +807,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   backgroundColor: 'transparent',
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
-                  shadowOpacity: 1, 
-                  shadowRadius: 400 * radMultiplier,
+                  shadowOpacity: healthFactor > 0 ? 1 : 0, 
+                  shadowRadius: radiusExtrema,
                   elevation: 60,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
 
-                {/* 4) Luz Galática (Desaparece quase totalmente em estado crítico) */}
+                {/* 4) Luz Galática (Anula-se a zero se Pos 1) */}
                 <Animated.View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -818,8 +821,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   backgroundColor: 'transparent',
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
-                  shadowOpacity: 0.9, 
-                  shadowRadius: 700 * radMultiplier,
+                  shadowOpacity: healthFactor > 0 ? 0.9 : 0, 
+                  shadowRadius: radiusGalatica,
                   elevation: 80,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
