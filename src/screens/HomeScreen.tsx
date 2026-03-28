@@ -745,12 +745,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         {(() => {
           // Lógica de degradação temporal e cor
           const diasSemExame = 8; // <-- SIMULAÇÃO: 8 DIAS (Exato ponto de Posição 1)
-          const isCritical = diasSemExame >= 8;
+          const isCritical = diasSemExame > 8; // SÓ A PARTIR de 8 dias passa a vermelho e perde vitalidade pulsante
           const glowColorRGB = isCritical ? '138, 21, 21' : '255, 215, 0'; // Vermelho sangue profundo/escuro
           const glowColorHex = isCritical ? '#8A1515' : '#FFD700';
 
-          // Fator de saúde (1.0 = Max radiance [0 dias: "Pos 7"], 0.0 = Min radiance [8+ dias: "Pos 1 original"])
-          const healthFactor = Math.max(0, 1 - (diasSemExame / 8));
+          // Fator de saúde (1.0 = Max radiance [0 dias: "Pos 7"], 0.0 = Min radiance [8 dias: "Pos 1 original"])
+          const healthFactor = Math.max(0, 1 - (Math.min(diasSemExame, 8) / 8));
           
           // Memória Exata da Posição 1: Base era 20, Expansiva era 100.
           // Interpolação linear da Pos 1 (0.0) para Pos 7 (1.0)
@@ -759,9 +759,11 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           const radiusExtrema = healthFactor * 400;         // Pos 1: 0   | Pos 7: 400
           const radiusGalatica = healthFactor * 700;        // Pos 1: 0   | Pos 7: 700
 
-          // Animação da intensidade (Na Pos 7 não encolhe muito: 0.75. Na Pos 1 encolhia até 0.3)
-          const minOpacity = 0.3 + (healthFactor * 0.45);
-          const maxOpacity = 1.0;
+          // Animação da intensidade
+          // Na Posição 1 ou superior: Aquece sempre até 1.0 (Pleno) e decai consoante saúde
+          // EM ESTADO CRÍTICO (> 8 dias): O pulmão falha. Pulsa muito fraco no fundo escuro (0.15 a 0.35)
+          const minOpacity = isCritical ? 0.15 : 0.3 + (healthFactor * 0.45);
+          const maxOpacity = isCritical ? 0.35 : 1.0;
 
           const glowOpacityAnim = pulseAnim.interpolate({
             inputRange: [1, 1.2],
