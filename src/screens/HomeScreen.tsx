@@ -744,7 +744,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         {/* ── CENTRAL VISUAL (The HoloPulse) ────────────────────────────────── */}
         {(() => {
           // Lógica de degradação temporal e cor
-          const diasSemExame = 8; // <-- SIMULAÇÃO: 8 DIAS (Exato ponto de Posição 1)
+          const diasSemExame = 2; // <-- SIMULAÇÃO: 2 DIAS (Pujança vibrante de ecrã quase máxima)
           const isCritical = diasSemExame > 8; // SÓ A PARTIR de 8 dias passa a vermelho e perde vitalidade pulsante
           const glowColorRGB = isCritical ? '138, 21, 21' : '255, 215, 0'; // Vermelho sangue profundo/escuro
           const glowColorHex = isCritical ? '#8A1515' : '#FFD700';
