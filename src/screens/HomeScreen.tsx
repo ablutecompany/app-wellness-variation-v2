@@ -752,7 +752,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           // Animação da intensidade/distância da luz exterior (degradê)
           const glowOpacityAnim = pulseAnim.interpolate({
             inputRange: [1, 1.2],
-            outputRange: [0.3, 1]
+            outputRange: [0.75, 1] // Redução do encolhimento: A aura mantém 75% da sua pujança radiante mínima, pulsando apenas do 'grande' para o 'gigante' em vez de encolher totalmente.
           });
 
           return (
