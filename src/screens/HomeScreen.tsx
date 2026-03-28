@@ -428,6 +428,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     extrapolate: 'clamp',
   });
 
+  const homeBlurBackdropOpacity = drawerAnim.interpolate({
+    inputRange: [DRAWER_UP, DRAWER_DOWN],
+    outputRange: [1, 0], // Fully visible when UP (drawer open), invisible when DOWN
+    extrapolate: 'clamp',
+  });
+
   const drawerPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -663,17 +669,18 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </Animated.View>
       )}
 
+
       {/* ── WEB EDGE GESTURE ZONES (only when both panels closed) ──────────── */}
       {Platform.OS === 'web' && !themesOpen && !dataOpen && (
         <View
           {...leftEdgeGesture.panHandlers}
-          style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 60, zIndex: 600 }}
+          style={{ position: 'absolute', left: 0, top: '25%', bottom: '25%', width: 60, zIndex: 600 }}
         />
       )}
       {Platform.OS === 'web' && !dataOpen && !themesOpen && (
         <View
           {...rightEdgeGesture.panHandlers}
-          style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 60, zIndex: 600 }}
+          style={{ position: 'absolute', right: 0, top: '25%', bottom: '25%', width: 60, zIndex: 600 }}
         />
       )}
 
@@ -797,8 +804,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
                     <Animated.View style={{ width: 240, height: 240, transform: [{ translateY: switchAnim }], zIndex: 9999 }} {...switchPanResponder.panHandlers}>
                       <View style={[styles.pulseContainer, { marginBottom: 0 }]} pointerEvents="box-none">
-                        {/* CHASSIS DO MOTOR GEOMÉTRICO (Zoom Out aplicado - 340) */}
-                        <View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}>
+                        {/* CHASSIS DO MOTOR GEOMÉTRICO (Zoom Out aplicado - 340) c/ Borda Metálica */}
+                        <View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, overflow: 'hidden', backgroundColor: '#020306', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.6)', justifyContent: 'center', alignItems: 'center' }}>
                           <BiomechanicRelic size={340} />
                           {/* Vidro fosco geral (frost filter) a 30% intensidade */}
                           <BlurView intensity={30} tint="dark" style={[StyleSheet.absoluteFill, { borderRadius: 120 }]} pointerEvents="none" />
@@ -881,6 +888,14 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </TouchableOpacity>
 
         {/* Trigger inside drawer now handles interactions */}
+      </Animated.View>
+
+      {/* ── BACKDROP: DRAWER BLUR (desfoca e suga 50% da luz do Home enquanto a gaveta App Place sobe) ── */}
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.6)', opacity: homeBlurBackdropOpacity, zIndex: 60 }]}
+        pointerEvents="none"
+      >
+        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFillObject} />
       </Animated.View>
 
 
@@ -1531,7 +1546,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: '38%',
-    width: 30,
+    width: 60, // Largura interativa dobrada para melhor arrasto de polegar
     height: 140,
     backgroundColor: 'rgba(5, 8, 14, 0.5)',
     borderTopRightRadius: 16,
@@ -1547,7 +1562,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: '38%',
-    width: 30,
+    width: 60, // Largura interativa dobrada para melhor arrasto de polegar
     height: 140,
     backgroundColor: 'rgba(5, 8, 14, 0.5)',
     borderTopLeftRadius: 16,

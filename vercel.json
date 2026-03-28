@@ -10,7 +10,10 @@
       "source": "/(.*)",
       "headers": [
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://*.vercel.app" }
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://*.vercel.app" },
+        { "key": "Cache-Control", "value": "s-maxage=0, no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" },
+        { "key": "Expires", "value": "0" }
       ]
     }
   ]

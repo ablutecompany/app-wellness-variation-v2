@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -58,6 +59,24 @@ function MainTabs() {
 }
 
 export default function App() {
+  // Limpeza nuclear de Cache para Mobile Browsers (elimina SW e Cache Storage antigos agressivamente)
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      try {
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            for (let name of names) caches.delete(name);
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let registration of registrations) registration.unregister();
+          });
+        }
+      } catch (e) {}
+    }
+  }, []);
+
   return (
     <NavigationContainer>
       <StatusBar style="light" />
