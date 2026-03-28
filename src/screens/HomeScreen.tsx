@@ -263,15 +263,19 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   React.useEffect(() => {
     let isActive = true;
     const runAnimation = () => {
+      if (!isActive) return;
+      
       arrowAnim.setValue(0); // Reinicia obrigatoriamente para 0
+      
       Animated.timing(arrowAnim, {
         toValue: 1,
-        duration: 1500, // Ciclo mais urgente de 1.5 seg
+        duration: 1500, // Ciclo urgente de 1.5 seg
         useNativeDriver: false, // Forçando JS Thread obriga bypass à placa gráfica
         isInteraction: false, // Para não ser pausado por toques do utilizador
-      }).start(({ finished }) => {
-        if (finished && isActive) {
-          runAnimation(); // Loop Recursivo Infinito à prova de falhas na Web!
+      }).start(() => {
+        if (isActive) {
+          // Quebra a Call Stack síncrona para que o RN Web não ignore o reinício
+          setTimeout(runAnimation, 20); 
         }
       });
     };
