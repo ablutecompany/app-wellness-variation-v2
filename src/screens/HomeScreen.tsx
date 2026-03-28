@@ -1547,12 +1547,12 @@ const styles = StyleSheet.create({
   leftEdgeHandle: {
     position: 'absolute',
     left: 0,
-    top: '40%',
-    width: 45, // Reduzido da versão massiva anterior de 60px
-    height: 90, // Encurtamento transversal (antes 140)
+    top: '38%',
+    width: 45, // Espessura interativa
+    height: 136, // Comprimento reposto para envolver perfeitamente os nomes rodados a 90deg
     backgroundColor: 'rgba(5, 8, 14, 0.45)',
-    borderTopRightRadius: 14,
-    borderBottomRightRadius: 14,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -1563,12 +1563,12 @@ const styles = StyleSheet.create({
   rightEdgeHandle: {
     position: 'absolute',
     right: 0,
-    top: '40%',
+    top: '38%',
     width: 45,
-    height: 90,
+    height: 136, // Comprimento reposto para albergar Resultados
     backgroundColor: 'rgba(5, 8, 14, 0.45)',
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
