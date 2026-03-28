@@ -1167,65 +1167,91 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       </Animated.View>
 
       {/* ── SIDE PANEL: DATA (RIGHT) ──────────────────────────────────────── */}
-      <Animated.View style={[styles.sidePanel, styles.rightPanel, { transform: [{ translateX: dataAnim }] }]}>
-        <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill}>
-          <View style={styles.panelHeader}>
-            <TouchableOpacity
-              onPress={closeData}
-              style={{ padding: 24 }}
-              hitSlop={{ top: 24, bottom: 24, left: 24, right: 24 }}
-            >
-              <X size={24} color="rgba(255,255,255,0.8)" />
-            </TouchableOpacity>
-            <Typography variant="h2" style={styles.panelTitle}>Bioanálise</Typography>
-          </View>
+      {(() => {
+        // Mapeia o índice estático de BIO_CATEGORIES para os IDs de selectedGroups
+        const idMap = ['U', 'S', 'F'];
+        const shortLabels = ['Urina', 'Fisiológica', 'Fecal'];
+        
+        // Filtra proativamente as categorias mantendo os arrays enriquecidos
+        const activeBioCategories = BIO_CATEGORIES.map((cat, i) => ({
+          ...cat,
+          id: idMap[i],
+          shortLabel: shortLabels[i]
+        })).filter(c => selectedGroups.includes(c.id));
 
-          {/* ── Tab Bar ── */}
-          <View style={styles.bioTabBar}>
-            {BIO_CATEGORIES.map((cat, i) => {
-              const shortLabels = ['Urina', 'Fisiológica', 'Fecal'];
-              const isActive = bioTab === i;
-              return (
+        // Previne crashes de índices se o utilizador desmarcar uma aba com o index maior selecionado.
+        const safeBioTab = bioTab >= activeBioCategories.length ? 0 : bioTab;
+
+        return (
+          <Animated.View style={[styles.sidePanel, styles.rightPanel, { transform: [{ translateX: dataAnim }] }]}>
+            <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill}>
+              <View style={styles.panelHeader}>
                 <TouchableOpacity
-                  key={i}
-                  style={[styles.bioTabBtn, isActive && { backgroundColor: `${cat.color}15`, borderColor: `${cat.color}40` }]}
-                  onPress={() => setBioTab(i)}
+                  onPress={closeData}
+                  style={{ padding: 24 }}
+                  hitSlop={{ top: 24, bottom: 24, left: 24, right: 24 }}
+                >
+                  <X size={24} color="rgba(255,255,255,0.8)" />
+                </TouchableOpacity>
+                <Typography variant="h2" style={styles.panelTitle}>Bioanálise</Typography>
+              </View>
+
+              {/* ── Tab Bar ── */}
+              <View style={styles.bioTabBar}>
+                {activeBioCategories.map((cat, i) => {
+                  const isActive = safeBioTab === i;
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[styles.bioTabBtn, isActive && { backgroundColor: `${cat.color}15`, borderColor: `${cat.color}40` }]}
+                      onPress={() => setBioTab(i)}
+                      activeOpacity={0.7}
+                    >
+                      <Typography style={[
+                        styles.bioTabLabel,
+                        isActive ? { color: cat.color, fontWeight: '800' } : { color: 'rgba(255,255,255,0.4)' }
+                      ]}>
+                        {cat.shortLabel}
+                      </Typography>
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity
+                  style={[styles.bioTabBtn, { marginLeft: 4 }]}
+                  onPress={() => setShowHistorico(true)}
                   activeOpacity={0.7}
                 >
-                  <Typography style={[
-                    styles.bioTabLabel,
-                    isActive ? { color: cat.color, fontWeight: '800' } : { color: 'rgba(255,255,255,0.4)' }
-                  ]}>
-                    {shortLabels[i]}
+                  <Typography style={[styles.bioTabLabel, { color: 'rgba(255,255,255,0.8)' }]}>
+                    Histórico
                   </Typography>
                 </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity
-              style={[styles.bioTabBtn, { marginLeft: 4 }]}
-              onPress={() => setShowHistorico(true)}
-              activeOpacity={0.7}
-            >
-              <Typography style={[styles.bioTabLabel, { color: 'rgba(255,255,255,0.8)' }]}>
-                Histórico
-              </Typography>
-            </TouchableOpacity>
-          </View>
-
-          {/* ── Active Tab Content ── */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelScroll}>
-            {BIO_CATEGORIES[bioTab].markers.map((item, i) => (
-              <View key={i} style={styles.bioRow}>
-                <Typography style={styles.bioName}>{item.name}</Typography>
-                <View style={styles.bioValueArea}>
-                  <Typography style={styles.bioVal}>{item.value}</Typography>
-                  {item.unit ? <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography> : null}
-                </View>
               </View>
-            ))}
-          </ScrollView>
-        </BlurView>
-      </Animated.View>
+
+              {/* ── Active Tab Content ── */}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelScroll}>
+                {activeBioCategories.length > 0 ? (
+                  activeBioCategories[safeBioTab].markers.map((item: any, i: number) => (
+                    <View key={i} style={styles.bioRow}>
+                      <Typography style={styles.bioName}>{item.name}</Typography>
+                      <View style={styles.bioValueArea}>
+                        <Typography style={styles.bioVal}>{item.value}</Typography>
+                        {item.unit ? <Typography variant="caption" style={styles.bioUnit}>{item.unit}</Typography> : null}
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <View style={{ alignItems: 'center', justifyContent: 'center', height: 200, paddingHorizontal: 20 }}>
+                    <Database size={32} color="rgba(255,255,255,0.2)" style={{ marginBottom: 16 }} />
+                    <Typography style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', fontSize: 13, lineHeight: 20 }}>
+                      Nenhum grupo de monitorização biológica ativado no Perfil.
+                    </Typography>
+                  </View>
+                )}
+              </ScrollView>
+            </BlurView>
+          </Animated.View>
+        );
+      })()}
 
       {/* ── BOTTOM DRAWER: APPS ───────────────────────────────────────────── */}
       <Animated.View
