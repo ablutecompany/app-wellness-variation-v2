@@ -765,55 +765,20 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(2, 4, 8, 0.65)' }]} />
                     </View>
 
-                    {/* Background Setas Accordion (Slide CTA) */}
-                    <View style={{ position: 'absolute', top: '50%', marginTop: 140, left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' }}>
-                      <View style={{ alignItems: 'center', height: 50, justifyContent: 'flex-start' }}>
-                        <Animated.View style={{ 
-                          opacity: arrowAnim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }), 
-                          transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 2] }) }],
-                          zIndex: 4 
-                        }}>
-                          <ChevronDown size={22} color="rgba(255,255,255,0.8)" style={{ marginBottom: -14 }} />
-                        </Animated.View>
-
-                        <Animated.View style={{ 
-                          opacity: arrowAnim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }), 
-                          transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }) }],
-                          zIndex: 3 
-                        }}>
-                          <ChevronDown size={22} color="rgba(255,255,255,0.6)" style={{ marginBottom: -14 }} />
-                        </Animated.View>
-
-                        <Animated.View style={{ 
-                          opacity: arrowAnim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }), 
-                          transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 18] }) }],
-                          zIndex: 2 
-                        }}>
-                          <ChevronDown size={22} color="rgba(255,255,255,0.4)" style={{ marginBottom: -14 }} />
-                        </Animated.View>
-
-                        <Animated.View style={{ 
-                          opacity: arrowAnim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }), 
-                          transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 32] }) }],
-                          zIndex: 1 
-                        }}>
-                          <ChevronDown size={22} color="rgba(255,255,255,0.2)" />
-                        </Animated.View>
-                      </View>
-                    </View>
+                    {/* As 4 antigas setas da base foram varridas do espaço sideral! */}
 
                     <Animated.View style={{ width: 240, height: 240, transform: [{ translateY: switchAnim }], zIndex: 9999 }} {...switchPanResponder.panHandlers}>
-                      {/* Seta Afixada ao Fundo do Círculo para Affordance Haptica de Swipe */}
+                      {/* NOVA ESTRELA CADENTE (Affordance Dinâmica) */}
                       <Animated.View style={{ 
                         position: 'absolute', 
-                        bottom: -45, 
-                        left: 0, 
-                        right: 0, 
+                        top: 260, 
+                        width: '100%',
                         alignItems: 'center',
-                        opacity: arrowAnim.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 0.3, 0] }),
+                        zIndex: 10000,
+                        opacity: arrowAnim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [1, 1, 0, 0] }),
                         transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 110] }) }]
                       }}>
-                        <ChevronDown size={44} strokeWidth={2.5} color="rgba(255,255,255,0.9)" />
+                        <ChevronDown size={44} strokeWidth={3} color="#FFFFFF" />
                       </Animated.View>
 
                       <View style={[styles.pulseContainer, { marginBottom: 0 }]} pointerEvents="box-none">
