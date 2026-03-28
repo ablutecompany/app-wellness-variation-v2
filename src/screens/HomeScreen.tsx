@@ -743,23 +743,33 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
         {/* ── CENTRAL VISUAL (The HoloPulse) ────────────────────────────────── */}
         {(() => {
-          // Lógica de tempo do último exame para oscilar entre amarelo e vermelho
-          const diasSemExame = 7; // Variável mock, simulando que já passou algum tempo
-          const isCritical = diasSemExame > 180;
-          const glowColorRGB = isCritical ? '255, 60, 60' : '255, 215, 0'; // Vermelho ou Amarelo
+          // Lógica de degradação temporal e cor
+          const diasSemExame = 21; // <-- SIMULAÇÃO: 21 DIAS 
+          const isCritical = diasSemExame >= 8;
+          const glowColorRGB = isCritical ? '255, 60, 60' : '255, 215, 0'; // Muda a vermelho ao 8.º dia
           const glowColorHex = isCritical ? '#FF3C3C' : '#FFD700';
 
-          // Animação da intensidade/distância da luz exterior (degradê)
+          // Fator de saúde (1.0 = Max radiance [0 dias], 0.0 = Min radiance [8+ dias])
+          const healthFactor = Math.max(0, 1 - (diasSemExame / 8));
+          
+          // Multiplicador de "Posição" (Pos 7 = 1.0, Pos 1 = 0.2)
+          const radMultiplier = 0.2 + (healthFactor * 0.8);
+
+          // Animação da intensidade (degradê a decair também com o healthFactor e pulsar menos intenso)
+          // Se Pos 7: 0.75 -> 1.0. Se Pos 1: 0.3 -> 0.6
+          const minOpacity = 0.3 + (healthFactor * 0.45);
+          const maxOpacity = 0.6 + (healthFactor * 0.40);
+
           const glowOpacityAnim = pulseAnim.interpolate({
             inputRange: [1, 1.2],
-            outputRange: [0.75, 1] // Redução do encolhimento: A aura mantém 75% da sua pujança radiante mínima, pulsando apenas do 'grande' para o 'gigante' em vez de encolher totalmente.
+            outputRange: [minOpacity, maxOpacity] 
           });
 
           return (
             <Animated.View style={[styles.centerContainer, { transform: [{ translateY: centerContentY }, { scale: 0.52 }] }]}>
               <View style={{ width: 240, height: 410, justifyContent: 'center', alignItems: 'center' }}>
                 
-                {/* 1) Luz Base Fixa (Glow denso que sela o contacto direto com as margens da pílula) */}
+                {/* 1) Luz Base Fixa (Afroxa consoante o rácio) */}
                 <View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -768,11 +778,11 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 1, 
-                  shadowRadius: 60,  // Luz nuclear alargada
+                  shadowRadius: 60 * radMultiplier,
                   elevation: 15
                 }} pointerEvents="none" />
 
-                {/* 2) Luz Expansiva Média (Aura Primária) */}
+                {/* 2) Luz Expansiva Média */}
                 <Animated.View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -781,12 +791,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 1, 
-                  shadowRadius: 200, // Espalhamento intermédio vasto
+                  shadowRadius: 200 * radMultiplier,
                   elevation: 40,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
 
-                {/* 3) Luz Expansiva Extrema (Raio muito maior, preenche metade do ecrã) */}
+                {/* 3) Luz Expansiva Extrema */}
                 <Animated.View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -795,12 +805,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 1, 
-                  shadowRadius: 400, // Aura profunda
+                  shadowRadius: 400 * radMultiplier,
                   elevation: 60,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
 
-                {/* 4) Luz Galática (Clarão que funde o abismo do background) */}
+                {/* 4) Luz Galática (Desaparece quase totalmente em estado crítico) */}
                 <Animated.View style={{ 
                   position: 'absolute',
                   width: 240, height: 410, 
@@ -809,7 +819,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   shadowColor: glowColorHex, 
                   shadowOffset: { width: 0, height: 0 }, 
                   shadowOpacity: 0.9, 
-                  shadowRadius: 700, // Literalmente invade as extremidades do telemóvel
+                  shadowRadius: 700 * radMultiplier,
                   elevation: 80,
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
