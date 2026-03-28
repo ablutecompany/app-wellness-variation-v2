@@ -315,6 +315,16 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       }
     }
   };
+  
+  // Settings Form State (Notificações)
+  type NotificationMode = 'Ativas' | 'Apenas Alertas' | 'Silenciadas';
+  const [notificationMode, setNotificationMode] = useState<NotificationMode>('Ativas');
+
+  const cycleNotificationMode = () => {
+    if (notificationMode === 'Ativas') setNotificationMode('Apenas Alertas');
+    else if (notificationMode === 'Apenas Alertas') setNotificationMode('Silenciadas');
+    else setNotificationMode('Ativas');
+  };
 
   // ── Inline mini-app for web (same pattern as AppsScreen) ─────────────────
   const [inlineApp, setInlineApp] = useState<MiniAppManifest | null>(null);
@@ -1652,10 +1662,14 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                 )}
               </View>
               {/* --- FIM GRUPOS --- */}
-              <View style={styles.settingsRow}>
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={cycleNotificationMode}
+                style={styles.settingsRow}
+              >
                 <Typography style={styles.settingsLabel}>Notificações</Typography>
-                <Typography style={styles.settingsValue}>Silenciadas</Typography>
-              </View>
+                <Typography style={styles.settingsValue}>{notificationMode}</Typography>
+              </TouchableOpacity>
             </BlurView>
           </TouchableOpacity>
         </TouchableOpacity>
