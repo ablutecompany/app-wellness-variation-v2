@@ -219,12 +219,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   glassCard: {
     padding: 24,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    paddingTop: 32,
+    paddingBottom: 28,
   },
   headerRow: {
     flexDirection: 'row',
