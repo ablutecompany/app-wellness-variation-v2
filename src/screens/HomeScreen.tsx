@@ -746,8 +746,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           // Lógica de degradação temporal e cor
           const diasSemExame = 21; // <-- SIMULAÇÃO: 21 DIAS 
           const isCritical = diasSemExame >= 8;
-          const glowColorRGB = isCritical ? '255, 60, 60' : '255, 215, 0'; // Muda a vermelho ao 8.º dia
-          const glowColorHex = isCritical ? '#FF3C3C' : '#FFD700';
+          const glowColorRGB = isCritical ? '208, 30, 30' : '255, 215, 0'; // Vermelho mais fechado e dramático
+          const glowColorHex = isCritical ? '#D01E1E' : '#FFD700';
 
           // Fator de saúde (1.0 = Max radiance [0 dias], 0.0 = Min radiance [8+ dias])
           const healthFactor = Math.max(0, 1 - (diasSemExame / 8));
