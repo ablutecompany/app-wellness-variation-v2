@@ -179,7 +179,7 @@ const MOCK_THEMES = [
 const SlotMachineOdometer = ({ targetNumber }: { targetNumber: number }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const H = 34; // Height of each single digit frame
-  const NUM_POOL = 30; // Amount of numbers to scroll through
+  const NUM_POOL = 35; // Amount of numbers to scroll through
 
   useEffect(() => {
     // Reset to "0" instantly if it re-mounts or target changes
@@ -286,6 +286,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [bioTab, setBioTab] = useState(0);
   const [themesOpen, setThemesOpen] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
+  const [diasSemExame, setDiasSemExame] = useState(25);
+  
   // Profile Form State
   const [profileName, setProfileName] = useState('Atleta Base');
   const [profileAge, setProfileAge] = useState('34');
@@ -816,7 +818,12 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
       >
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
         <View style={styles.header}>
-          <BrandLogo size="medium" />
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => setDiasSemExame((prev) => (prev + 2 >= 30 ? 1 : prev + 2))}
+          >
+            <BrandLogo size="medium" />
+          </TouchableOpacity>
           <View style={styles.headerRight}>
             <View style={styles.topIconRow}>
               <TouchableOpacity style={styles.iconCircle} onPress={() => setShowControl(true)}>
@@ -831,8 +838,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
         {/* ── CENTRAL VISUAL (The HoloPulse) ────────────────────────────────── */}
         {(() => {
-          // Lógica de degradação temporal e cor
-          const diasSemExame = 25; // <-- SIMULAÇÃO: 25 DIAS (Estado de Abandono/Letargia Crítica)
+          // Lógica de degradação temporal e cor (diasSemExame is now a state)
           const isCritical = diasSemExame > 8; // SÓ A PARTIR de 8 dias passa a vermelho e perde vitalidade pulsante
           const glowColorRGB = isCritical ? '138, 21, 21' : '255, 215, 0'; // Vermelho sangue profundo/escuro
           const glowColorHex = isCritical ? '#8A1515' : '#FFD700';
