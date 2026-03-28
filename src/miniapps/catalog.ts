@@ -52,7 +52,7 @@ export const MINI_APP_CATALOG: MiniAppManifest[] = [
   },
   {
     id: 'sleep-deep',
-    name: 'Sleep Deep+',
+    name: 'deep sleep',
     tagline: 'Sono de qualidade com binaural & HRV tracking',
     developer: 'NeuroRest',
     developerVerified: false,
@@ -60,7 +60,7 @@ export const MINI_APP_CATALOG: MiniAppManifest[] = [
     iconEmoji: '🌙',
     iconColor: '#8B5CF6',
     iconBg: 'rgba(139, 92, 246, 0.12)',
-    url: 'https://sleep-deep.vercel.app',
+    url: 'https://deepsleep-kappa.vercel.app/',
     permissions: ['PROFILE_READ', 'SLEEP_DATA_READ', 'NOTIFICATIONS'],
     version: '0.9.2',
     featured: false,
