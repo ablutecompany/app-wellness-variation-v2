@@ -264,7 +264,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     const loop = Animated.loop(
       Animated.timing(arrowAnim, {
         toValue: 1,
-        duration: 1800, // Ciclo relaxado mas ritmado de 1.8 seg
+        duration: 1500, // Ciclo mais urgente de 1.5 seg
         useNativeDriver: false, // Forçando JS Thread resolve bugs obscuros de opacidade fantasma na Web
       })
     );
@@ -781,8 +781,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                     {/* INDICADOR KINETICO DE DESLIZE (Swipe Down Affordance iOS Style) */}
                     <View style={{ position: 'absolute', top: 250, bottom: 0, left: 0, right: 0, alignItems: 'center', zIndex: 99999, pointerEvents: 'none' }}>
                       <Animated.View style={{ 
-                        opacity: arrowAnim.interpolate({ inputRange: [0, 0.1, 0.7, 1], outputRange: [0, 1, 1, 0] }),
-                        transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 110] }) }]
+                        opacity: arrowAnim.interpolate({ inputRange: [0, 0.05, 0.9, 1], outputRange: [0, 1, 1, 0] }),
+                        transform: [{ translateY: arrowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 120] }) }]
                       }}>
                         <ChevronDown size={36} strokeWidth={1.5} color="rgba(255, 255, 255, 0.95)" />
                       </Animated.View>
