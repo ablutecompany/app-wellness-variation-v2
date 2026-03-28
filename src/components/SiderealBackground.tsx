@@ -271,8 +271,8 @@ const htmlContent = `
     }
 
     function frame(time) {
-      // DESACELERADOR GLOBAL: O tempo flui agora a 25% da velocidade normal.
-      t = time * 0.25;
+      // VELOCIDADE NORMAL: Simulação flui no tempo real
+      t = time;
       drawBackground(); drawClouds(t); drawStars(t); drawFloaters(t); drawEmbers(t);
       requestAnimationFrame(frame);
     }

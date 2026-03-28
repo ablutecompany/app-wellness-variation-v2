@@ -613,12 +613,8 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
   return (
     <Container safe style={styles.container}>
-      {/* ── FULL SCREEN BACKGROUND SIDEREO ───────────────────────────────── */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <SiderealBackground />
-        
-        {/* Base darkening layer (Apagão a 95% garantindo apenas micromovimentos difusos) */}
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(2, 4, 8, 0.95)' }]} pointerEvents="none" />
+      {/* ── FULL SCREEN BACKGROUND ESTÁTICO NEGRO ───────────────────────────────── */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#020306' }]} pointerEvents="none">
 
         {/* Floating nuances */}
         <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: floatAnim1 }]} pointerEvents="none">
@@ -754,8 +750,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   opacity: glowOpacityAnim
                 }} pointerEvents="none" />
 
-                {/* The Track Base - Pill interior FIXO (Não pulsa de tamanho) - Fosso Escurecido */}
-                <View style={{ width: 240, height: 410, borderRadius: 120, overflow: 'hidden', backgroundColor: 'rgba(2, 4, 8, 0.98)', borderWidth: 1, borderColor: 'rgba(255, 230, 184, 0.08)', zIndex: 10 }}>
+                {/* The Track Base - Pill interior FIXO - Agora atua como Tubo Sideral */}
+                <View style={{ width: 240, height: 410, borderRadius: 120, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1, borderColor: 'rgba(255, 230, 184, 0.08)', zIndex: 10 }}>
+                    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+                      <SiderealBackground />
+                      {/* Subtil manto para apaziguar a simulação e encaixar no breu */}
+                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(2, 4, 8, 0.65)' }]} />
+                    </View>
 
                     {/* Background Setas Accordion (Slide CTA) */}
                     <View style={{ position: 'absolute', top: '50%', marginTop: 140, left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' }}>
@@ -796,9 +797,9 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
                     <Animated.View style={{ width: 240, height: 240, transform: [{ translateY: switchAnim }], zIndex: 9999 }} {...switchPanResponder.panHandlers}>
                       <View style={[styles.pulseContainer, { marginBottom: 0 }]} pointerEvents="box-none">
-                        {/* CHASSIS DO MOTOR GEOMÉTRICO (Zoom Perfeito Matemático) */}
+                        {/* CHASSIS DO MOTOR GEOMÉTRICO (Zoom Out aplicado - 340) */}
                         <View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' }}>
-                          <BiomechanicRelic size={520} />
+                          <BiomechanicRelic size={340} />
                           {/* Vidro fosco geral (frost filter) a 30% intensidade */}
                           <BlurView intensity={30} tint="dark" style={[StyleSheet.absoluteFill, { borderRadius: 120 }]} pointerEvents="none" />
                         </View>
