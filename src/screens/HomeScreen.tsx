@@ -300,6 +300,22 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [autoExpanded, setAutoExpanded] = useState(false);
   const [showAutoWarning, setShowAutoWarning] = useState(false);
 
+  // Settings Form State (Grupos de Análise)
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(['U', 'S', 'F', 'O']);
+  const [groupsExpanded, setGroupsExpanded] = useState(false);
+  const [showOutrosWarning, setShowOutrosWarning] = useState(false);
+  
+  const handleToggleGroup = (id: string) => {
+    if (selectedGroups.includes(id)) {
+      setSelectedGroups(selectedGroups.filter(g => g !== id));
+    } else {
+      setSelectedGroups([...selectedGroups, id]);
+      if (id === 'O') {
+        setShowOutrosWarning(true);
+      }
+    }
+  };
+
   // ── Inline mini-app for web (same pattern as AppsScreen) ─────────────────
   const [inlineApp, setInlineApp] = useState<MiniAppManifest | null>(null);
 
@@ -1567,11 +1583,51 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
               {/* --- FIM MODO ANÁLISE --- */}
               <View style={styles.dividerModal} />
 
+              {/* --- NOVO SECIONADOR DE GRUPOS DE ANÁLISE --- */}
+              <View style={{ marginBottom: groupsExpanded ? 16 : 0 }}>
+                <TouchableOpacity 
+                  activeOpacity={0.8}
+                  onPress={() => setGroupsExpanded(!groupsExpanded)}
+                  style={styles.settingsRow}
+                >
+                  <Typography style={styles.settingsLabel}>Selecionar grupos de análises</Typography>
+                  <View style={{ backgroundColor: 'rgba(0, 242, 255, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0, 242, 255, 0.3)' }}>
+                    <Typography style={{ color: '#00F2FF', fontSize: 13, fontWeight: '700' }}>
+                      {selectedGroups.length === 4 ? 'TOTAL' : (selectedGroups.length === 0 ? 'NENHUM' : selectedGroups.join(', '))}
+                    </Typography>
+                  </View>
+                </TouchableOpacity>
 
-              <View style={styles.settingsRow}>
-                <Typography style={styles.settingsLabel}>Sincronização HeathKit</Typography>
-                <Typography style={styles.settingsValue}>Ativo</Typography>
+                {groupsExpanded && (
+                  <View style={{ marginTop: 8, backgroundColor: 'rgba(0,0,0,0.2)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)' }}>
+                    {[
+                      { id: 'U', label: 'U - Urinálise' },
+                      { id: 'S', label: 'S - Sinais Fisiológicos' },
+                      { id: 'F', label: 'F - Avaliação Fecal' },
+                      { id: 'O', label: 'O - Outros' }
+                    ].map(group => {
+                      const isActive = selectedGroups.includes(group.id);
+                      return (
+                        <TouchableOpacity
+                          key={group.id}
+                          activeOpacity={0.8}
+                          onPress={() => handleToggleGroup(group.id)}
+                          style={{
+                            flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16,
+                            borderBottomWidth: group.id !== 'O' ? 1 : 0, borderBottomColor: 'rgba(255,255,255,0.03)'
+                          }}
+                        >
+                          <View style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1, borderColor: isActive ? '#00F2FF' : 'rgba(255,255,255,0.2)', backgroundColor: isActive ? 'rgba(0, 242, 255, 0.2)' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                            {isActive && <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: '#00F2FF' }} />}
+                          </View>
+                          <Typography style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: isActive ? '500' : '400' }}>{group.label}</Typography>
+                        </TouchableOpacity>
+                      )
+                    })}
+                  </View>
+                )}
               </View>
+              {/* --- FIM GRUPOS --- */}
               <View style={styles.settingsRow}>
                 <Typography style={styles.settingsLabel}>Notificações</Typography>
                 <Typography style={styles.settingsValue}>Silenciadas</Typography>
@@ -1581,7 +1637,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* ── AUTO WARNING POUUP ────────────────────────────────────────────── */}
+      {/* ── AUTO WARNING POPUP ────────────────────────────────────────────── */}
       <Modal visible={showAutoWarning} transparent animationType="fade" onRequestClose={() => setShowAutoWarning(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowAutoWarning(false)}>
           <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
@@ -1594,6 +1650,26 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                 Esta função usa NFC, ou dados de ECG, para identificar o utilizador, sem necessidade de emparelhamento com o telemóvel.
               </Typography>
               <TouchableOpacity style={[styles.saveBtn, { width: '100%', marginBottom: 10 }]} onPress={() => setShowAutoWarning(false)}>
+                <Typography style={styles.saveBtnText}>COMPREENDIDO</Typography>
+              </TouchableOpacity>
+            </BlurView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── OUTROS WARNING POPUP (GRUPOS) ─────────────────────────────────── */}
+      <Modal visible={showOutrosWarning} transparent animationType="fade" onRequestClose={() => setShowOutrosWarning(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowOutrosWarning(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <BlurView intensity={80} tint="dark" style={[styles.modalContent, { borderColor: 'rgba(0, 242, 255, 0.5)', borderWidth: 1 }]}>
+              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0, 242, 255, 0.15)', justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 20, marginTop: 10 }}>
+                <Activity size={26} color="#00F2FF" />
+              </View>
+              <Typography variant="h2" style={{ textAlign: 'center', color: '#fff', marginBottom: 15, fontSize: 18 }}>Fontes Adicionais</Typography>
+              <Typography style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 22, marginBottom: 30 }}>
+                O sistema poderá incorporar fontes de informação de diferentes origens, como por exemplo: dados fornecidos por aplicações, telemóvel associado, ou dados inseridos manualmente pelo utilizador.
+              </Typography>
+              <TouchableOpacity style={[styles.saveBtn, { width: '100%', marginBottom: 10 }]} onPress={() => setShowOutrosWarning(false)}>
                 <Typography style={styles.saveBtnText}>COMPREENDIDO</Typography>
               </TouchableOpacity>
             </BlurView>
