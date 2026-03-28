@@ -220,11 +220,11 @@ const SlotMachineOdometer = ({ targetNumber }: { targetNumber: number }) => {
 
 // --- MECHANICAL WHEEL PICKER COMPONENT ---
 const WheelPicker = ({ value, onChange, min = 1, max = 30 }: { value: number, onChange: (v: number)=>void, min?: number, max?: number }) => {
-  const ITEM_HEIGHT = 44;
+  const ITEM_HEIGHT = 34;
   const numbers = Array.from({length: max - min + 1}, (_, i) => i + min);
   
   return (
-    <View style={{ height: ITEM_HEIGHT * 3, overflow: 'hidden', alignItems: 'center', marginVertical: 10, width: 100, alignSelf: 'center' }}>
+    <View style={{ height: ITEM_HEIGHT * 3, overflow: 'hidden', alignItems: 'center', marginVertical: 0, width: 80, alignSelf: 'center' }}>
       {/* Indicador Central Cyberpunk */}
       <View style={{ position: 'absolute', top: ITEM_HEIGHT, height: ITEM_HEIGHT, width: '100%', backgroundColor: 'rgba(0, 242, 255, 0.05)', borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(0, 242, 255, 0.3)', zIndex: 0 }} pointerEvents="none" />
       
@@ -1496,7 +1496,6 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                       {[
                         { id: '2x_dia', label: '2x Dia' },
                         { id: 'diaria', label: 'Diária' },
-                        { id: '2_em_2', label: '2 em 2 Dias' },
                         { id: 'custom', label: 'Personalizado' },
                       ].map(freq => (
                         <TouchableOpacity
@@ -1517,16 +1516,19 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
                     {/* Wheel Picker Visível apenas se selecionado Personalizado */}
                     {autoFrequency === 'custom' && (
-                       <View style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'center' }}>
-                         <Typography style={{ color: 'rgba(0, 242, 255, 0.8)', fontSize: 12, marginBottom: 5 }}>Espaçamento de Exames</Typography>
+                       <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                         <View style={{ flex: 1, paddingRight: 10 }}>
+                           <Typography style={{ color: 'rgba(0, 242, 255, 0.8)', fontSize: 13, marginBottom: 2 }}>Espaçamento de Exames</Typography>
+                           <Typography style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 0 }}>Gerar análise a cada {customDays} {customDays === 1 ? 'dia' : 'dias'}</Typography>
+                         </View>
                          <WheelPicker value={customDays} onChange={setCustomDays} min={1} max={30} />
-                         <Typography style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 5 }}>A cada {customDays} {customDays === 1 ? 'dia' : 'dias'}</Typography>
                        </View>
                     )}
                   </View>
                 )}
               </View>
               {/* --- FIM MODO ANÁLISE --- */}
+              <View style={styles.dividerModal} />
 
               <View style={styles.settingsRow}>
                 <Typography style={styles.settingsLabel}>Foco Principal (IA)</Typography>
