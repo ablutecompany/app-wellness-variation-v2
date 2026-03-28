@@ -1591,11 +1591,9 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   style={styles.settingsRow}
                 >
                   <Typography style={styles.settingsLabel}>Selecionar grupos de análises</Typography>
-                  <View style={{ backgroundColor: 'rgba(0, 242, 255, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0, 242, 255, 0.3)' }}>
-                    <Typography style={{ color: '#00F2FF', fontSize: 13, fontWeight: '700' }}>
-                      {selectedGroups.length === 4 ? 'TOTAL' : (selectedGroups.length === 0 ? 'NENHUM' : selectedGroups.join(', '))}
-                    </Typography>
-                  </View>
+                  <Typography style={styles.settingsValue}>
+                    {selectedGroups.length === 4 ? 'TOTAL' : (selectedGroups.length === 0 ? 'NENHUM' : selectedGroups.join(', '))}
+                  </Typography>
                 </TouchableOpacity>
 
                 {groupsExpanded && (
