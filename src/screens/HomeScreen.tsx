@@ -1361,7 +1361,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                    { id: 'nutri-menu', name: '_Meal\nplanner', icon: <Utensils size={24} color="#00D4AA" />, color: '#00D4AA' },
                    { id: 'femmhealth', name: '_Fem\nsanctuary', icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#FF6FBA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#FF6FBA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View>, color: '#FF6FBA' },
                    { id: 'longevity-secrets', name: '_Healthspan', icon: <Sparkles size={24} color="#FFD700" />, color: '#FFD700' },
-                   { id: 'sleep-deep', name: '_Sleep\nDeep+', icon: <Moon size={24} color="#00F2FF" />, color: '#00F2FF' },
+                   { id: 'sleep-deep', name: '_deep\nsleep', icon: <Moon size={24} color="#00F2FF" />, color: '#00F2FF' },
                  ].map((drawerApp) => {
                     const manifest = MINI_APP_CATALOG.find((m: any) => m.id === drawerApp.id);
                    const installed = installedAppIds.includes(drawerApp.id);
@@ -1426,7 +1426,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   { id: 'femmhealth',         title: '_Fem sanctuary',    desc: 'Saúde Feminina',      icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#FF6FBA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#FF6FBA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View> },
                   { id: 'nutri-menu',         title: '_Meal planner',     desc: 'Nutrição Personalizada', icon: <Utensils size={22} color="#00D4AA" /> },
                   { id: 'longevity-secrets',  title: '_Healthspan',       desc: 'Longevidade & Bem-estar', icon: <Sparkles size={22} color="#FFD700" /> },
-                  { id: 'sleep-deep',         title: 'Sleep Deep+',       desc: 'Integração Profunda de Sono',  icon: <Moon size={22} color="#00F2FF" /> },
+                  { id: 'sleep-deep',         title: 'deep sleep',       desc: 'Integração Profunda de Sono',  icon: <Moon size={22} color="#00F2FF" /> },
                   { id: '_hydra',             title: 'HydraTrack',        desc: 'Gestão de Água',       icon: <Droplet size={22} color="#00F2FF" opacity={0.6} /> },
                   { id: '_mind',              title: 'Mind',              desc: 'Foco e Meditação',     icon: <Brain size={22} color="#00F2FF" opacity={0.6} /> },
                   { id: '_fasting',           title: 'Fasting',           desc: 'Jejum Intermitente',   icon: <Activity size={22} color="#00F2FF" opacity={0.6} /> },
