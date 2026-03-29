@@ -1354,12 +1354,19 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                <View style={{ flex: 1, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.15)' }} />
             </View>
 
-            <Animated.View style={{ paddingHorizontal: 24, paddingBottom: 20 }}>
-              <View style={styles.appGrid}>
+            <Animated.View style={{ paddingBottom: 20 }}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={[styles.appGrid, { paddingHorizontal: 24, gap: 24, justifyContent: 'flex-start' }]}
+                decelerationRate="fast"
+                snapToInterval={88} // Approximate width of item + gap
+              >
                 {[
                    { id: 'nutri-menu', name: '_Meal\nplanner', icon: <Utensils size={24} color="#00D4AA" />, color: '#00D4AA' },
                    { id: 'femmhealth', name: '_Fem\nsanctuary', icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#FF6FBA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#FF6FBA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View>, color: '#FF6FBA' },
                    { id: 'longevity-secrets', name: '_Healthspan', icon: <Sparkles size={24} color="#FFD700" />, color: '#FFD700' },
+                   { id: 'sleep-deep', name: '_Sleep\nDeep+', icon: <Moon size={24} color="#00F2FF" />, color: '#00F2FF' },
                  ].map((drawerApp) => {
                     const manifest = MINI_APP_CATALOG.find((m: any) => m.id === drawerApp.id);
                    const installed = installedAppIds.includes(drawerApp.id);
@@ -1408,7 +1415,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   </TouchableOpacity>
                    );
                  })}
-              </View>
+              </ScrollView>
             </Animated.View>
           </View>
 
@@ -1425,7 +1432,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   { id: 'femmhealth',         title: '_Fem sanctuary',    desc: 'Saúde Feminina',      icon: <View style={{ flexDirection: 'row', alignItems: 'center' }}><Typography style={{ color: '#FF6FBA', fontSize: 22, fontWeight: '800' }}>♀</Typography><Typography style={{ color: '#FF6FBA', fontSize: 16, fontWeight: '900', marginLeft: 2 }}>H</Typography></View> },
                   { id: 'nutri-menu',         title: '_Meal planner',     desc: 'Nutrição Personalizada', icon: <Utensils size={22} color="#00D4AA" /> },
                   { id: 'longevity-secrets',  title: '_Healthspan',       desc: 'Longevidade & Bem-estar', icon: <Sparkles size={22} color="#FFD700" /> },
-                  { id: '_sleep',             title: 'Sleep+',            desc: 'Otimização de Ciclos',  icon: <Moon size={22} color="#00F2FF" opacity={0.6} /> },
+                  { id: 'sleep-deep',         title: 'Sleep Deep+',       desc: 'Integração Profunda de Sono',  icon: <Moon size={22} color="#00F2FF" /> },
                   { id: '_hydra',             title: 'HydraTrack',        desc: 'Gestão de Água',       icon: <Droplet size={22} color="#00F2FF" opacity={0.6} /> },
                   { id: '_mind',              title: 'Mind',              desc: 'Foco e Meditação',     icon: <Brain size={22} color="#00F2FF" opacity={0.6} /> },
                   { id: '_fasting',           title: 'Fasting',           desc: 'Jejum Intermitente',   icon: <Activity size={22} color="#00F2FF" opacity={0.6} /> },
@@ -1436,7 +1443,26 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   const isReal = !id.startsWith('_'); // real apps have install/uninstall wired up
                   return (
                     <View key={id} style={styles.downloadRow}>
-                      <View style={styles.rowIcon}>{icon}</View>
+                      <TouchableOpacity 
+                        style={styles.rowIcon}
+                        activeOpacity={isInstalled && isReal ? 0.7 : 1}
+                        onPress={() => {
+                          if (isInstalled && isReal) {
+                            const manifest = MINI_APP_CATALOG.find((m: any) => m.id === id);
+                            if (manifest) {
+                              launchApp(manifest);
+                              if (Platform.OS === 'web') {
+                                setInlineApp(manifest);
+                              } else {
+                                const nav = navigation?.getParent() || navigation;
+                                nav?.navigate('MiniApp', { app: manifest });
+                              }
+                            }
+                          }
+                        }}
+                      >
+                        {icon}
+                      </TouchableOpacity>
                       <View style={styles.rowInfo}>
                         <Typography style={styles.rowTitle}>{title}</Typography>
                         <Typography variant="caption" style={styles.rowDesc}>{desc}</Typography>

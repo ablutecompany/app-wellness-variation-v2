@@ -15,7 +15,7 @@
     "dev": "ablute_ Labs",
     "desc": "Integração profunda com o teu sono.",
     "icon": "moon",
-    "url": "https://sleep.ablute.com",
+    "url": "https://deepsleep-kappa.vercel.app/",
     "rating": 4.8,
     "permissions": ["health_data"]
   }
