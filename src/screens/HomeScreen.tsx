@@ -993,10 +993,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
 
           {/* ── Compact Header ── */}
           <View style={styles.themePanelHeader}>
-            <View style={{ flex: 1 }}>
-              <Typography style={styles.themePanelTitle}>INTERPRETAÇÃO DAS ANÁLISES POR IA</Typography>
-              <Typography style={styles.themePanelTagline}>O que o teu corpo está a dizer hoje.</Typography>
+          <View style={{ flex: 1 }}>
+            <Typography style={styles.themePanelTitle}>INTERPRETAÇÃO DAS ANÁLISES POR IA</Typography>
+            <Typography style={styles.themePanelTagline}>O que o teu corpo está a dizer hoje.</Typography>
+            <View style={{ backgroundColor: 'red', padding: 8, marginTop: 10, borderRadius: 8 }}>
+               <Typography style={{ color: 'white', fontWeight: 'bold' }}>DEBUG SECÇÃO AI VISIBLE - BUILD CANÁRIO - MASTER</Typography>
             </View>
+          </View>
             <TouchableOpacity
               onPress={closeThemes}
               style={[styles.themePanelClose, { padding: 24 }]}
