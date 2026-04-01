@@ -30,6 +30,7 @@ import { MINI_APP_CATALOG } from '../miniapps/catalog';
 import { MiniAppContainer } from '../miniapps/MiniAppContainer';
 import { MiniAppManifest } from '../miniapps/types';
 import { useStore } from '../store/useStore';
+import { generateInsights } from '../services/insights';
 
 const BIO_CATEGORIES = [
   {
@@ -81,7 +82,7 @@ const BIO_CATEGORIES = [
   },
 ];
 
-const MOCK_THEMES = [
+const MOCK_THEMES_DEPRECATED = [
   {
     title: 'Performance & Equilíbrio',
     score: 88,
@@ -274,7 +275,9 @@ const WheelPicker = ({ value, onChange, min = 1, max = 30, width = 80 }: { value
 
 export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { width, height } = useWindowDimensions();
-  const { installedAppIds, launchApp, uninstallApp } = useStore();
+  const storeState = useStore();
+  const { installedAppIds, launchApp, uninstallApp } = storeState;
+  const MOCK_THEMES = React.useMemo(() => generateInsights(storeState), [storeState]);
 
   const themesFlatListRef = useRef<FlatList>(null);
   const themesPanelHeight = height;

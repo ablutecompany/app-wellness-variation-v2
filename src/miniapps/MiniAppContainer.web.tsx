@@ -40,7 +40,8 @@ export const MiniAppContainer: React.FC<MiniAppContainerProps> = ({
   const [error, setError] = useState(false);
   const launchTime = useRef(Date.now());
 
-  const { user, globalScore, credits, closeApp } = useStore();
+  const storeState = useStore();
+  const { user, globalScore, credits, closeApp, recordAppEvent } = storeState;
   const { logEvent } = useAnalytics();
 
   const handleClose = () => {
@@ -82,8 +83,17 @@ export const MiniAppContainer: React.FC<MiniAppContainerProps> = ({
       try {
         // Only handle messages from the mini-app URL origin (basic security)
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data?.event) {
-          console.log('[MiniApp Bridge Web]', data.event, data.payload);
+        if (data?.event && data?.payload) {
+          recordAppEvent({
+            eventId: Math.random().toString(36).substring(2, 15),
+            sourceApp: app.id,
+            eventType: data.event as any,
+            payload: data.payload,
+            recordedAt: Date.now(),
+            confidence: data.payload.confidence,
+            validityWindow: data.payload.validityWindow,
+          });
+          console.log('[MiniApp Bridge Web] Guardado evento:', data.event);
         }
       } catch {}
     };

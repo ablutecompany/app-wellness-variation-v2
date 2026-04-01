@@ -94,3 +94,26 @@ export interface AnalyticsEvent {
   timestamp: number;
   meta?: Record<string, unknown>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mini-App Write-Back Events
+// ─────────────────────────────────────────────────────────────────────────────
+export type MiniAppEventType =
+  | 'preference_changed'
+  | 'context_note_added'
+  | 'meal_accepted'
+  | 'meal_rejected'
+  | 'ingredient_disliked'
+  | 'sleep_pattern_changed'
+  | 'sleep_debt_detected'
+  | 'fatigue_context_added';
+
+export interface MiniAppEvent {
+  eventId: string;
+  sourceApp: string;
+  eventType: MiniAppEventType;
+  payload: any;
+  recordedAt: number;
+  confidence?: number;
+  validityWindow?: number;
+}

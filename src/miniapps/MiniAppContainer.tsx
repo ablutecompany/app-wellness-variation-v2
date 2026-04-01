@@ -15,6 +15,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { MiniAppManifest } from './types';
 import { useStore } from '../store/useStore';
 import { useAnalytics } from './analytics';
+import { buildContextPayload } from '../services/miniapp-context';
 
 // react-native-webview is native-only. We lazy-import to avoid web crashes.
 let WebView: any = null;
@@ -34,14 +35,18 @@ interface MiniAppContainerProps {
  *   window.ablute.getHealth()      → { globalScore, credits }
  *   window.ablute.emit(evt,payload) → sends postMessage back to native shell
  */
-function buildBridgeScript(user: any, health: any): string {
-  const userJson = JSON.stringify(user ?? {});
-  const healthJson = JSON.stringify(health ?? {});
+function buildBridgeScript(payload: any): string {
+  const payloadJson = JSON.stringify(payload ?? {});
   return `
     (function() {
-      window.__ablute_user__   = ${userJson};
-      window.__ablute_health__ = ${healthJson};
+      window.__ablute_context__ = ${payloadJson};
+      
+      // Fallback para mini-apps existentes
+      window.__ablute_user__   = window.__ablute_context__.profileContext || {};
+      window.__ablute_health__ = window.__ablute_context__.healthSummaryContext || {};
+      
       window.ablute = {
+        getContext: function() { return window.__ablute_context__; },
         getUser:    function() { return window.__ablute_user__; },
         getHealth:  function() { return window.__ablute_health__; },
         emit: function(event, payload) {
@@ -50,8 +55,9 @@ function buildBridgeScript(user: any, health: any): string {
           } catch(e) {}
         }
       };
+      
       // Dispatch a ready event so mini-apps can listen
-      window.dispatchEvent(new CustomEvent('ablute:ready', { detail: { user: window.__ablute_user__, health: window.__ablute_health__ } }));
+      window.dispatchEvent(new CustomEvent('ablute:ready', { detail: window.__ablute_context__ }));
       true; // required for Android
     })();
   `;
@@ -66,7 +72,8 @@ export const MiniAppContainer: React.FC<MiniAppContainerProps> = ({
   const webViewRef = useRef<any>(null);
   const launchTime = useRef(Date.now());
 
-  const { user, globalScore, credits, closeApp } = useStore();
+  const storeState = useStore();
+  const { closeApp, recordAppEvent } = storeState;
   const { logEvent } = useAnalytics();
 
   const handleClose = () => {
@@ -79,8 +86,18 @@ export const MiniAppContainer: React.FC<MiniAppContainerProps> = ({
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      // Future: handle data.event to react to mini-app events
-      console.log('[MiniApp Bridge]', data);
+      if (data && data.event && data.payload) {
+        recordAppEvent({
+          eventId: Math.random().toString(36).substring(2, 15),
+          sourceApp: app.id,
+          eventType: data.event as any,
+          payload: data.payload,
+          recordedAt: Date.now(),
+          confidence: data.payload.confidence,
+          validityWindow: data.payload.validityWindow,
+        });
+        console.log('[MiniApp Bridge] Guardado evento:', data.event);
+      }
     } catch {}
   };
 
@@ -115,10 +132,7 @@ export const MiniAppContainer: React.FC<MiniAppContainerProps> = ({
   }
 
   // ── NATIVE WEBVIEW ────────────────────────────────────────────────────────
-  const bridgeScript = buildBridgeScript(
-    user ? { name: user.name, goals: user.goals } : null,
-    { globalScore, credits }
-  );
+  const bridgeScript = buildBridgeScript(buildContextPayload(app.id, storeState));
 
   return (
     <View style={styles.container}>
