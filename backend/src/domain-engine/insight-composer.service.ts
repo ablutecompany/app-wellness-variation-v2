@@ -1,63 +1,75 @@
 import { Injectable } from '@nestjs/common';
-import { DomainInsight, DomainScore, DomainType, DomainStatus } from './types';
+import { DomainStatus, DomainType, DomainInsight } from './types';
 
 @Injectable()
 export class InsightComposerService {
-  private readonly templates: Record<DomainType, (score: number) => string> = {
-    energy: (s) => s > 70 
-      ? 'A tua carga energética está resiliente.' 
-      : 'Os teus drivers de energia sugerem sobrecarga metabólica.',
-    recovery: (s) => s > 70
-      ? 'A tua regeneração está em níveis ideais.'
-      : 'Sinais de recuperação incompleta detetados nos biomarcadores residuais.',
-    performance: (s) => s > 75
-      ? 'Pico de performance atlética identificado.'
-      : 'Capacidade de esforço limitada por fatores de fadiga.',
-    sleep: (s) => s > 75
-      ? 'Padrão de sono estável e profundo.'
-      : 'A qualidade do sono está a comprometer a tua recuperação.',
-    nutrition: (s) => s > 70
-      ? 'Perfil nutricional equilibrado e funcional.'
-      : 'Défice de micronutrientes identificado nos sinais metabólicos.',
-    general: (s) => s > 70
-      ? 'Bem-estar holístico estável.'
-      : 'Equilíbrio funcional abaixo do ideal; requer atenção aos pilares base.'
-  };
-
-  compose(domain: DomainType, score: DomainScore, measurements: any[]): DomainInsight[] {
+  /**
+   * Compor narrativas de saúde baseadas em factos determinísticos.
+   * Puro, sem LLM, sem texto aleatório.
+   */
+  compose(domain: DomainType, score: any, measurements: any[]): DomainInsight[] {
     if (score.status === 'unavailable' || score.status === 'insufficient_data') {
       return [{
-        id: `insight_${domain}_empty`,
-        summary: 'Dados insuficientes para análise profunda.',
-        explanation: 'Ainda não capturamos medições suficientes para gerar um perfil de saúde completo para este domínio.',
-        factors: { status: score.status },
-        evidenceRefs: [],
-        version: '1.2.0',
-        tone: 'clinical-light'
+        id: `insufficient_${domain}`,
+        summary: `Dados de ${domain} insuficientes`,
+        explanation: `Ainda não temos medições suficientes para gerar um diagnóstico biográfico em ${domain}. Continue a usar os seus equipamentos para desbloquear este ecrã.`,
+        tone: 'informative',
+        factors: [],
+        version: '1.2.0'
       }];
     }
 
-    const summary = this.templates[domain](score.value);
-    const explanation = this.generateExplanation(domain, score, measurements);
+    const insights: DomainInsight[] = [];
+    const mainInsight = this.getMainInsight(domain, score.band);
+    if (mainInsight) insights.push(mainInsight);
 
-    return [{
-      id: `insight_${domain}_${Date.now()}`,
-      summary,
-      explanation,
-      factors: {
-        freshness: score.freshnessPenalty,
-        completeness: score.completenessPenalty,
-        status: score.status
-      },
-      evidenceRefs: measurements.map(m => m.id),
-      version: '1.2.0',
-      tone: 'clinical-light'
-    }];
+    // Adicionar factores biográficos baseados em medições reais
+    const criticalBiomarkers = measurements.filter(m => m.valueNumeric < 20 || m.valueNumeric > 80);
+    if (criticalBiomarkers.length > 0) {
+      insights.push({
+        id: `biomarker_alert_${domain}`,
+        summary: `Factores Críticos Detectados`,
+        explanation: `Identificamos variações significativas em ${criticalBiomarkers.map(b => b.code).join(', ')}. Isto pode estar a impactar o seu score de ${domain}.`,
+        tone: 'alert',
+        factors: criticalBiomarkers.map(b => b.code),
+        version: '1.2.0'
+      });
+    }
+
+    return insights;
   }
 
-  private generateExplanation(domain: DomainType, score: DomainScore, measurements: any[]): string {
-    const strength = score.value > 70 ? 'positivos' : 'limitantes';
-    const count = measurements.length;
-    return `Com base na análise de ${count} sinais biológicos, identificamos que os teus fatores ${strength} estão a definir o teu estado atual de ${domain}.`;
+  private getMainInsight(domain: DomainType, band: 'optimal' | 'fair' | 'poor'): DomainInsight | null {
+    const registry: Record<string, Record<string, { summary: string; explanation: string }>> = {
+      sleep: {
+        optimal: { summary: 'Sono Restaurador', explanation: 'A sua qualidade de sono está no nível ideal para recuperação biológica.' },
+        fair: { summary: 'Sono Estável', explanation: 'O seu sono é regular, mas há espaço para optimizar a profundidade.' },
+        poor: { summary: 'Sono Fragmentado', explanation: 'Identificamos interrupções que estão a comprometer a sua recuperação.' }
+      },
+      nutrition: {
+        optimal: { summary: 'Equilíbrio Metabólico', explanation: 'Os seus níveis de glucose e hidratação estão em harmonia.' },
+        fair: { summary: 'Dieta Baseline', explanation: 'A sua base nutricional está estável, mas sugere-se ajuste fino.' },
+        poor: { summary: 'Stress Nutricional', explanation: 'Os sinais biográficos indicam desequilíbrio na ingestão de nutrientes chave.' }
+      },
+      general: {
+        optimal: { summary: 'Wellness Holístico', explanation: 'Todos os sistemas biográficos estão a operar em níveis ótimos.' },
+        fair: { summary: 'Modo Manutenção', explanation: 'O seu estado geral é bom, mantendo o rastro operacional.' },
+        poor: { summary: 'Fadiga Biológica', explanation: 'O seu score geral indica necessidade imediata de foco em recuperação.' }
+      }
+    };
+
+    const domainEntry = registry[domain] || registry['general'];
+    const entry = domainEntry[band];
+
+    if (!entry) return null;
+
+    return {
+      id: `${domain}_${band}_main`,
+      summary: entry.summary,
+      explanation: entry.explanation,
+      tone: band === 'poor' ? 'alert' : 'supportive',
+      factors: [],
+      version: '1.2.0'
+    };
   }
 }

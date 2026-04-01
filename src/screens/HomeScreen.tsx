@@ -31,7 +31,7 @@ import { MiniAppContainer } from '../miniapps/MiniAppContainer';
 import { MiniAppManifest } from '../miniapps/types';
 import { useStore } from '../store/useStore';
 import * as Selectors from '../store/selectors';
-import { getSemanticInsights } from '../services/insights';
+import { getSemanticInsights, getSemanticStatus } from '../services/insights';
 import { semanticOutputService } from '../services/semantic-output';
 
 
@@ -150,20 +150,24 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   
   // Subscrição ao Bundle Semântico v1.2.0 (Fonte de Verdade)
   const [semanticThemes, setSemanticThemes] = useState(getSemanticInsights());
+  const [semanticStatus, setSemanticStatus] = useState(getSemanticStatus());
   
   // O score global principal agora vem do domínio 'general' do bundle
-  const globalScore = semanticOutputService.getDomainOutput('general')?.score?.value || localGlobalScore;
+  const semanticDomain = semanticOutputService.getDomainOutput('general');
+  const globalScore = semanticStatus === 'ready' ? (semanticDomain?.score || 0) : localGlobalScore;
 
   useEffect(() => {
     // Escuta alterações no bundle global e actualiza a UI da Shell
     const unsubscribe = semanticOutputService.subscribe(() => {
-      const insights = getSemanticInsights();
-      setSemanticThemes(insights);
+      setSemanticThemes(getSemanticInsights());
+      setSemanticStatus(getSemanticStatus());
 
       // Telemetria: Rastro de visualização de domínios na Home
+      const bundle = semanticOutputService.getBundle();
+      if (!bundle || bundle.status !== 'ready') return;
+
+      const insights = getSemanticInsights();
       insights.forEach(insight => {
-        const bundle = semanticOutputService.getBundle();
-        if (!bundle) return;
         const output = bundle.domains[insight.domain];
         if (!output) return;
 
@@ -172,13 +176,13 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           eventType: output.status === 'sufficient_data' ? 'insight_displayed' : 
                      (output.status === 'insufficient_data' ? 'insufficient_data_state_displayed' : 'unavailable_state_displayed'),
           domain: insight.domain,
-          bundleVersion: bundle.bundleVersion,
+          bundleVersion: bundle.version,
           semanticVersion: '1.2.0',
           screen: 'home',
           status: output.status,
-          insightIds: output.insights.map(i => i.id),
+          insightIds: output.mainInsight ? [output.mainInsight.id] : [],
           recommendationIds: output.recommendations.map(r => r.id),
-          evidenceRefIds: output.inputSummary.trace,
+          evidenceRefIds: [],
           source: 'shell'
         });
       });

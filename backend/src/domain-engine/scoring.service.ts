@@ -1,92 +1,93 @@
 import { Injectable } from '@nestjs/common';
-import { DomainScore, DomainStatus, DomainType, ScoringConfig } from './types';
+import { DomainStatus, DomainType, DomainScore } from './types';
 
 @Injectable()
 export class ScoringService {
-  private readonly configs: Record<DomainType, ScoringConfig> = {
-    energy: {
-      weights: { glucose: 0.3, urea: 0.2, sodium: 0.2, potassium: 0.1, hydration: 0.2 },
-      thresholds: { optimal: 85, functional: 65 }
-    },
-    recovery: {
-      weights: { urea: 0.4, creatinine: 0.2, sleep_quality: 0.4 },
-      thresholds: { optimal: 80, functional: 60 }
-    },
-    performance: {
-      weights: { glucose: 0.3, hydration: 0.2, activity_load: 0.5 },
-      thresholds: { optimal: 85, functional: 70 }
-    },
-    sleep: {
-      weights: { sleep_quality: 0.6, hrv: 0.2, resting_heart_rate: 0.2 },
-      thresholds: { optimal: 80, functional: 60 }
-    },
-    nutrition: {
-      weights: { glucose: 0.5, fiber_intake: 0.3, hydration: 0.2 },
-      thresholds: { optimal: 85, functional: 65 }
-    },
-    general: {
-      weights: { activity_load: 0.3, sleep_quality: 0.3, glucose: 0.4 },
-      thresholds: { optimal: 80, functional: 60 }
-    }
-  };
-
+  /**
+   * Calcular o score numérico final para um domínio biográfico.
+   * Puro, determinístico, auditável.
+   */
   calculate(domain: DomainType, measurements: any[]): DomainScore {
-    const config = this.configs[domain] || { weights: {}, thresholds: { optimal: 80, functional: 60 } };
-    const weightCodes = Object.keys(config.weights);
-
-    let baseScore = 0;
-    const capturedCodes: string[] = [];
-
-    for (const code of weightCodes) {
-      const weight = config.weights[code];
-      const match = measurements.find(m => m.code === code);
-      const val = match?.valueNumeric ?? 50; // Neutral fallback
-      
-      baseScore += (val * weight);
-      if (match) capturedCodes.push(code);
+    if (measurements.length === 0) {
+      return this.getUnavailableScore();
     }
 
-    const freshnessPenalty = this.calculateFreshnessPenalty(measurements);
-    const completenessPenalty = (weightCodes.length - capturedCodes.length) * 5;
-    
-    const finalValue = Math.max(0, Math.min(100, Math.round(baseScore - freshnessPenalty - completenessPenalty)));
-    const confidence = Math.max(0, 100 - (freshnessPenalty * 2 + completenessPenalty));
+    // 1. Extrair factos (Latest measurements)
+    const weights = this.getWeights(domain);
+    let totalScore = 0;
+    let totalWeight = 0;
+    let dataMaturity = 0;
 
-    const status: DomainStatus = capturedCodes.length === 0 
-      ? 'unavailable' 
-      : (capturedCodes.length < weightCodes.length / 2) 
-        ? 'insufficient_data' 
-        : 'sufficient_data';
+    for (const m of measurements) {
+      const weight = weights[m.code] || 0;
+      if (weight > 0) {
+        // Normalização base (0-100)
+        const value = Math.max(0, Math.min(100, m.valueNumeric));
+        totalScore += value * weight;
+        totalWeight += weight;
+        dataMaturity++;
+      }
+    }
+
+    if (totalWeight === 0) return this.getUnavailableScore();
+
+    // 2. Penalizações (Freshness & Completeness)
+    const rawScore = totalScore / totalWeight;
+    const { freshnessPenalty, completenessPenalty } = this.calculatePenalties(domain, dataMaturity);
+    
+    const finalValue = Math.max(0, Math.min(100, rawScore - freshnessPenalty - completenessPenalty));
+
+    // 3. Status Gating
+    const status: DomainStatus = dataMaturity < 3 ? 'insufficient_data' : 'sufficient_data';
+
+    // 4. Band Allocation
+    const band: 'optimal' | 'fair' | 'poor' = finalValue > 80 ? 'optimal' : finalValue > 50 ? 'fair' : 'poor';
+    const stateLabel = this.getStateLabel(band);
 
     return {
-      value: finalValue,
-      confidence,
-      stateLabel: this.getStateLabel(finalValue, config.thresholds),
-      band: this.getBand(finalValue, config.thresholds),
+      value: Math.round(finalValue),
+      stateLabel,
+      band,
+      confidence: Math.min(1.0, dataMaturity / 10),
       freshnessPenalty,
       completenessPenalty,
       status
     };
   }
 
-  private calculateFreshnessPenalty(measurements: any[]): number {
-    if (measurements.length === 0) return 20;
-    const now = new Date();
-    const oldest = Math.min(...measurements.map(m => m.capturedAt ? new Date(m.capturedAt).getTime() : now.getTime()));
-    const hoursDiff = (now.getTime() - oldest) / (1000 * 60 * 60);
-    return Math.min(30, Math.floor(hoursDiff / 12));
+  private getWeights(domain: DomainType): Record<string, number> {
+    const maps: Record<DomainType, Record<string, number>> = {
+      sleep: { sleep_quality: 0.5, heart_rate: 0.2, activity_load: 0.3 },
+      nutrition: { glucose: 0.4, urea: 0.3, sodium: 0.3 },
+      general: { wellness_score: 1.0 },
+      energy: { glucose: 0.6, hydration: 0.4 },
+      recovery: { urea: 0.5, sleep_quality: 0.5 },
+      performance: { activity_load: 0.7, hydration: 0.3 }
+    };
+    return maps[domain] || { base: 1.0 };
   }
 
-  private getStateLabel(score: number, thresholds: any): string {
-    if (score >= thresholds.optimal) return 'excelente';
-    if (score >= thresholds.functional) return 'bom';
-    if (score >= 50) return 'moderado';
-    return 'fraco';
+  private calculatePenalties(domain: DomainType, maturity: number) {
+    // Audit-ready: Penalização fixa baseada em maturidade de dados
+    const completenessPenalty = maturity < 3 ? 15 : maturity < 5 ? 5 : 0;
+    const freshnessPenalty = 0; // Futura integração com timestamps
+    return { freshnessPenalty, completenessPenalty };
   }
 
-  private getBand(score: number, thresholds: any): 'optimal' | 'functional' | 'critical' {
-    if (score >= thresholds.optimal) return 'optimal';
-    if (score >= thresholds.functional) return 'functional';
-    return 'critical';
+  private getStateLabel(band: 'optimal' | 'fair' | 'poor'): string {
+    const labels = { optimal: 'Excelente', fair: 'Bom', poor: 'Atenção' };
+    return labels[band];
+  }
+
+  private getUnavailableScore(): DomainScore {
+    return {
+      value: 0,
+      stateLabel: 'Indisponível',
+      band: 'poor',
+      confidence: 0,
+      freshnessPenalty: 0,
+      completenessPenalty: 0,
+      status: 'unavailable'
+    };
   }
 }

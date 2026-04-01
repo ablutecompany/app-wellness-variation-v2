@@ -1,30 +1,31 @@
 /**
- * Domain Engine Types
- * Unified contract for deterministic scoring, insights and recommendations.
+ * SEMANTIC DOMAIN ENGINE v1.2.0 - Core Types
+ * Deterministic Health Narratives
  */
 
-export type DomainType = 'sleep' | 'nutrition' | 'general' | 'recovery' | 'energy' | 'performance';
-export type ExposurePolicy = 'allowed' | 'denied' | 'unavailable';
-export type DomainStatus = 'sufficient_data' | 'insufficient_data' | 'unavailable';
+export type DomainType = 'sleep' | 'nutrition' | 'general' | 'energy' | 'recovery' | 'performance';
 
-export interface DomainScore {
+export type DomainStatus = 
+  | 'sufficient_data' 
+  | 'insufficient_data' 
+  | 'unavailable' 
+  | 'stale';
+
+export interface EvidenceRef {
+  biomarkerCode: string;
   value: number;
-  confidence: number;
-  status: DomainStatus;
-  stateLabel: string; // e.g. "excelente", "moderado"
-  band: 'functional' | 'optimal' | 'critical';
-  freshnessPenalty: number;
-  completenessPenalty: number;
+  unit: string;
+  capturedAt: Date;
+  state: 'optimal' | 'borderline' | 'critical';
 }
 
 export interface DomainInsight {
   id: string;
   summary: string;
   explanation: string;
-  factors: Record<string, any>;
-  evidenceRefs: string[]; // IDs of measurements/facts used
+  tone: 'informative' | 'supportive' | 'alert';
+  factors: string[];
   version: string;
-  tone: 'clinical-light' | 'motivational';
 }
 
 export interface RecommendationItem {
@@ -38,34 +39,31 @@ export interface RecommendationItem {
   impactLevel: 'low' | 'medium' | 'high';
 }
 
+export interface DomainScore {
+  value: number; // 0-100
+  stateLabel: string; // 'Excelente', 'Bom', 'Atenção'
+  band: 'optimal' | 'fair' | 'poor';
+  confidence: number; // 0.0 - 1.0
+  freshnessPenalty: number;
+  completenessPenalty: number;
+  status: DomainStatus;
+}
+
 export interface DomainSemanticOutput {
   domain: DomainType;
   version: string;
-  status: DomainStatus;
   generatedAt: number;
   score: DomainScore;
   insights: DomainInsight[];
   recommendations: RecommendationItem[];
-  inputSummary: {
-    signalsCount: number;
-    lastSignalAt: number | null;
-    trace: string[]; // Audit trace of what was analyzed
-  };
-  evidenceRefs: string[];
+  evidence: EvidenceRef[];
+  trace: string[]; // Audit IDs
 }
 
 export interface DomainSemanticBundle {
   bundleVersion: string;
   generatedAt: number;
   userId: string;
-  domains: Record<DomainType, DomainSemanticOutput>;
+  domains: Record<string, DomainSemanticOutput>;
   coherenceFlags: string[];
-}
-
-export interface ScoringConfig {
-  weights: Record<string, number>;
-  thresholds: {
-    optimal: number;
-    functional: number;
-  };
 }

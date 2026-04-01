@@ -6,8 +6,8 @@ export class ThemeController {
   constructor(private themeEngine: ThemeEngineService) {}
 
   @Get()
-  async getThemes(@Body() body: any) {
-    return this.themeEngine.getUserThemes(body.userId);
+  async getThemes(@Body() body: { userId: string, requestedDomains?: string[] }) {
+    return this.themeEngine.getUserThemes(body.userId, body.requestedDomains);
   }
 
   @Post(':code/calculate')

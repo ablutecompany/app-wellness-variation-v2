@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { AppState } from '../types';
 import { AppContributionEvent } from '../../miniapps/types';
 import { saveToStorage, loadFromStorage } from '../persistence';
+import { semanticOutputService } from '../../services/semantic-output';
 
 const persisted = loadFromStorage();
 
@@ -10,7 +11,7 @@ export interface ContributionsSlice {
   addAppContributionEvent: (event: AppContributionEvent) => void;
 }
 
-export const createContributionsSlice: StateCreator<AppState, [], [], ContributionsSlice> = (set) => ({
+export const createContributionsSlice: StateCreator<AppState, [], [], ContributionsSlice> = (set, get) => ({
   appContributionEvents: persisted.appContributionEvents,
 
   addAppContributionEvent: (event) => set((state) => {
@@ -19,7 +20,7 @@ export const createContributionsSlice: StateCreator<AppState, [], [], Contributi
       e.eventId === event.eventId || 
       (e.sourceAppId === event.sourceAppId && 
        e.eventType === event.eventType && 
-       Math.abs(e.recordedAt - event.recordedAt) < 1000 && // Janela de 1s para o mesmo timestamp real
+       Math.abs(e.recordedAt - event.recordedAt) < 1000 && 
        JSON.stringify(e.payload) === JSON.stringify(event.payload))
     );
 
@@ -30,6 +31,11 @@ export const createContributionsSlice: StateCreator<AppState, [], [], Contributi
 
     const nextEvents = [event, ...state.appContributionEvents];
     saveToStorage(state.installedAppIds, state.grantedPermissions, state.appEvents, nextEvents);
+    
+    // Governed Invalidation v1.2.0: Resolução por Afinidade Determinística
+    const userId = 'user_current_session_1';
+    semanticOutputService.markDirtyFromContribution(userId, event.sourceAppId, event.eventType);
+    
     return { appContributionEvents: nextEvents };
   }),
 });

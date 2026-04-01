@@ -2,41 +2,46 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Container, Typography } from '../components/Base';
 import { ThemeCard } from '../components/ThemeCard';
-import { getSemanticInsights } from '../services/insights';
+import { getSemanticInsights, getSemanticStatus } from '../services/insights';
 import { semanticOutputService } from '../services/semantic-output';
 
 export const ThemesScreen: React.FC = () => {
   const [themes, setThemes] = React.useState(getSemanticInsights());
+  const [status, setStatus] = React.useState(getSemanticStatus());
 
   React.useEffect(() => {
     const unsubscribe = semanticOutputService.subscribe(() => {
-      const insights = getSemanticInsights();
-      setThemes(insights);
-
-      // Telemetria: Rastro de visualização de domínios na lista de Temas
-      insights.forEach(insight => {
-        const bundle = semanticOutputService.getBundle();
-        if (!bundle) return;
-        const output = bundle.domains[insight.domain];
-        if (!output) return;
-
-        const { semanticTelemetry } = require('../services/semantic-output/telemetry/engine');
-        semanticTelemetry.record({
-          eventType: output.status === 'sufficient_data' ? 'insight_displayed' : 'insufficient_data_state_displayed',
-          domain: insight.domain,
-          bundleVersion: bundle.bundleVersion,
-          semanticVersion: '1.2.0',
-          screen: 'themes',
-          status: output.status,
-          insightIds: output.insights.map(i => i.id),
-          recommendationIds: output.recommendations.map(r => r.id),
-          evidenceRefIds: output.inputSummary.trace,
-          source: 'shell'
-        });
-      });
+      setThemes(getSemanticInsights());
+      setStatus(getSemanticStatus());
     });
     return unsubscribe;
   }, []);
+
+  const renderContent = () => {
+    if (status === 'loading') {
+      return (
+        <View style={styles.stateContainer}>
+          <Typography style={styles.stateText}>A sincronizar rastro biográfico...</Typography>
+        </View>
+      );
+    }
+
+    if (status === 'error') {
+      return (
+        <View style={styles.stateContainer}>
+          <Typography style={styles.stateText}>Erro na recepção do bundle semântico.</Typography>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {themes.map((theme, index) => (
+          <ThemeCard key={index} {...theme} />
+        ))}
+      </ScrollView>
+    );
+  };
 
   return (
     <Container safe style={styles.container}>
@@ -46,14 +51,10 @@ export const ThemesScreen: React.FC = () => {
 
       <View style={styles.header}>
         <Typography variant="h2" style={styles.title}>Temas AI</Typography>
-        <Typography style={styles.subtitle}>Insights baseados no teu contexto atual</Typography>
+        <Typography style={styles.subtitle}>Insights determinísticos v1.2.0</Typography>
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {themes.map((theme, index) => (
-          <ThemeCard key={index} {...theme} />
-        ))}
-      </ScrollView>
+      {renderContent()}
     </Container>
   );
 };
@@ -93,5 +94,16 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  stateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  stateText: {
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center',
+    fontSize: 16,
   }
 });

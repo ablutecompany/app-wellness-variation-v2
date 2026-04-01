@@ -1,56 +1,71 @@
 /**
- * Frontend types for the Backend Semantic Output Contract.
- * Mirrors backend/src/domain-engine/types.ts
+ * SEMANTIC OUTPUT CONTRACT v1.2.0
+ * Hardened Operational View Models - Selective Invalidation
  */
 
-export type DomainType = 'sleep' | 'nutrition' | 'general' | 'recovery' | 'energy' | 'performance';
-export type DomainStatus = 'sufficient_data' | 'insufficient_data' | 'unavailable';
+export type SemanticStatus = 
+  | 'sufficient_data' 
+  | 'insufficient_data' 
+  | 'unavailable' 
+  | 'stale';
 
-export interface DomainScore {
-  value: number;
-  confidence: number;
-  status: DomainStatus;
-  stateLabel: string;
-  band: 'functional' | 'optimal' | 'critical';
+/**
+ * ESTADO FORMAL DE SINCRONIZAÇÃO OPERACIONAL (v1.2.0)
+ */
+export type SemanticOutputStatus = 
+  | 'idle'
+  | 'loading' 
+  | 'ready' 
+  | 'refreshing'
+  | 'stale'
+  | 'insufficient_data' 
+  | 'error';
+
+export interface SemanticMetadata {
+  lastUpdatedAt: number;
+  lastRequestedAt: number;
+  lastErrorAt?: number;
+  isDirty: boolean;
+  dirtyDomains: Record<string, boolean>; // NOVO: Invalidação Seletiva
+  staleAfterMs: number;
+  version: string;
+  retryCount: number;
 }
 
-export interface DomainInsight {
+export interface SemanticInsightView {
   id: string;
   summary: string;
-  explanation: string;
-  factors: Record<string, any>;
-  evidenceRefs: string[];
+  description: string;
+  tone: 'informative' | 'supportive' | 'alert';
+  factors: string[];
 }
 
-export interface RecommendationItem {
+export interface SemanticRecommendationView {
   id: string;
-  type: string;
   title: string;
-  bodyShort: string;
-  bodyLong: string;
-  priorityRank: number;
-  effortLevel: 'low' | 'medium' | 'high';
-  impactLevel: 'low' | 'medium' | 'high';
+  actionable: string;
+  impact: 'low' | 'medium' | 'high';
+  effort: 'low' | 'medium' | 'high';
 }
 
-export interface DomainOutput {
-  domain: DomainType;
+export interface SemanticDomainView {
+  domain: string;
+  label: string;
+  score: number;
+  status: SemanticStatus;
+  statusLabel: string;
+  band: 'optimal' | 'fair' | 'poor';
+  mainInsight?: SemanticInsightView;
+  recommendations: SemanticRecommendationView[];
+  generatedAt: number;
   version: string;
-  status: DomainStatus;
-  generatedAt: number;
-  score: DomainScore;
-  insights: DomainInsight[];
-  recommendations: RecommendationItem[];
-  inputSummary: {
-    signalsCount: number;
-    lastSignalAt: number | null;
-    trace: string[];
-  };
 }
 
-export interface SemanticBundle {
-  bundleVersion: string;
+export interface SemanticOutputState {
+  version: string;
   generatedAt: number;
-  domains: Record<string, DomainOutput>;
-  coherenceFlags: string[];
+  domains: Record<string, SemanticDomainView>;
+  status: SemanticOutputStatus;
+  metadata: SemanticMetadata;
+  isLive: boolean;
 }

@@ -739,30 +739,56 @@ model DerivedContextFact {
 }
 
 // --- AI GATEWAY & PROMPTS (Section 28) ---
-model AIRequest {
+
+model PromptTemplate {
   id               String   @id @default(uuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id])
-  sessionId        String?
-  promptId         String
-  promptRun        PromptRun @relation(fields: [promptId], references: [id])
-  inputPayload     Json
-  resultPayload    Json?
-  status           String
-  execMillis       Int?
-  modelUsed        String?
-  costMetadata     Json?
+  code             String   @unique // ex: 'sleep_semantic_narrative'
+  name             String
+  description      String?
+  versions         PromptVersion[]
+  createdAt        DateTime @default(now())
+}
+
+model PromptVersion {
+  id               String   @id @default(uuid())
+  templateId       String
+  template         PromptTemplate @relation(fields: [templateId], references: [id])
+  version          String // ex: '1.2.0'
+  systemPrompt     String // O texto real governado
+  parameters       Json // temperature, max_tokens, etc.
+  inputSchema      Json // JSON Schema para validação do payload permitido
+  active           Boolean  @default(true)
+  runs             PromptRun[]
   createdAt        DateTime @default(now())
 }
 
 model PromptRun {
   id               String   @id @default(uuid())
-  code             String   @unique
-  version          String
-  promptTemplate   String
-  parameters       Json
-  active           Boolean  @default(true)
+  versionId        String
+  version          PromptVersion @relation(fields: [versionId], references: [id])
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  status           String // open, completed, failed
+  metadata         Json?
   requests         AIRequest[]
+  createdAt        DateTime @default(now())
+}
+
+model AIRequest {
+  id               String   @id @default(uuid())
+  runId            String
+  run              PromptRun @relation(fields: [runId], references: [id])
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  sessionId        String?
+  inputPayload     Json
+  resultPayload    Json?
+  status           String
+  execMillis       Int?
+  modelUsed        String?
+  tokensUsed       Int?
+  costMetadata     Json?
+  createdAt        DateTime @default(now())
 }
 
 enum UserRole {

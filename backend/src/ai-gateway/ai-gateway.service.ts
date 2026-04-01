@@ -1,62 +1,88 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PromptInput, PromptResult } from './types';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AiGatewayService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Executar um prompt versionado (Gouvernance Framework).
-   * O frontend envia apenas o código e as variáveis; o prompt real vive no backend.
+   * Executar um prompt versionado (Governança Total).
+   * 1. Resolve Template e Versão Ativa
+   * 2. Valida Input
+   * 3. Regista PromptRun e AIRequest
+   * 4. Executa via Provider (Simulado)
    */
-  async executePrompt(input: PromptInput): Promise<PromptResult> {
-    const promptRun = await this.prisma.promptRun.findUnique({
-      where: { code: input.promptCode }
-    });
-
-    if (!promptRun || promptRun.version !== input.version) {
-      throw new Error(`Prompt [${input.promptCode}] versão [${input.version}] não existe.`);
+  async executePrompt(input: PromptInput, actor: { id: string, role: UserRole }): Promise<PromptResult> {
+    // 1. RBAC Check Interno (Double-Lock)
+    if (actor.role !== UserRole.ADMIN_INTERNAL && actor.role !== UserRole.SERVICE_BACKEND) {
+      throw new ForbiddenException('Execução de prompt AI restrita a papéis governados.');
     }
 
-    try {
-      /**
-       * Simulação do futuro pipeline OpenAI:
-       * 1. Montar prompt final (System + User + Context)
-       * 2. Chamar OpenAI via SDK protegida
-       * 3. Validar Schema de output
-       * 4. Persistir rastro
-       */
-       
-      const start = Date.now();
-      
-      // Placeholder para o conteúdo resultante (v1.2.0 compatibility)
-      const simulatedResult = {
-        message: `Resultado gerado para ${input.promptCode}`,
-        variables: input.variables
-      };
+    // 2. Resolver Template e Versão
+    const template = await this.prisma.promptTemplate.findUnique({
+      where: { code: input.promptCode },
+      include: {
+        versions: {
+          where: { version: input.version, active: true },
+          take: 1
+        }
+      }
+    });
 
+    if (!template || template.versions.length === 0) {
+      throw new NotFoundException(`Prompt [${input.promptCode}] v${input.version} não encontrado ou inativo.`);
+    }
+
+    const versionDoc = template.versions[0];
+
+    try {
+      const start = Date.now();
+
+      // 3. Criar a sessão de execução (PromptRun)
+      const run = await this.prisma.promptRun.create({
+        data: {
+          versionId: versionDoc.id,
+          userId: actor.id,
+          status: 'processing'
+        }
+      });
+
+      // 4. Execução Simulada (Placeholder para o Provider OpenAI)
+      // Aqui o backend montaria o prompt final usando versionDoc.systemPrompt + input.variables
+      const resultMessage = this.simulateAiResponse(input.promptCode, input.variables);
+
+      // 5. Persistir AIRequest (O rastro individual)
       const aiRequest = await this.prisma.aiRequest.create({
         data: {
-          userId: input.userId,
+          runId: run.id,
+          userId: actor.id,
           sessionId: input.sessionId,
-          promptId: promptRun.id,
           inputPayload: input.variables,
-          resultPayload: simulatedResult,
+          resultPayload: { content: resultMessage },
           status: 'success',
           execMillis: Date.now() - start,
-          modelUsed: 'gpt-4o-schema-governed'
+          modelUsed: 'gpt-4o-governed-v1',
+          tokensUsed: 150,
+          costMetadata: { currency: 'USD', value: 0.002 }
         }
+      });
+
+      // Atualizar status da Run
+      await this.prisma.promptRun.update({
+        where: { id: run.id },
+        data: { status: 'completed' }
       });
 
       return {
         requestId: aiRequest.id,
         promptCode: input.promptCode,
         version: input.version,
-        content: simulatedResult,
+        content: resultMessage,
         metadata: {
-          model: 'gpt-4o-schema-governed',
-          tokensUsed: 42,
+          model: 'gpt-4o-governed-v1',
+          tokensUsed: 150,
           execMillis: Date.now() - start,
           finishReason: 'stop',
           timestamp: Date.now()
@@ -64,7 +90,44 @@ export class AiGatewayService {
       };
 
     } catch (e) {
-      throw new InternalServerErrorException(`Falha na gateway AI: ${e.message}`);
+      throw new InternalServerErrorException(`Falha na Governança AI: ${e.message}`);
     }
+  }
+
+  /**
+   * Inicialização do Catálogo de Prompts Governados.
+   */
+  async syncPromptCatalogue() {
+    const sleepCode = 'sleep_semantic_narrative';
+    const nutriCode = 'nutrition_semantic_narrative';
+
+    // Sleep Narrative Template
+    await this.prisma.promptTemplate.upsert({
+      where: { code: sleepCode },
+      update: {},
+      create: {
+        code: sleepCode,
+        name: 'Sleep Semantic Narrative Generator',
+        description: 'Gera narrativa de suporte baseada no bundle de sono v1.2.0'
+      }
+    });
+
+    // Nutrition Narrative Template
+    await this.prisma.promptTemplate.upsert({
+      where: { code: nutriCode },
+      update: {},
+      create: {
+        code: nutriCode,
+        name: 'Nutrition Advice Narrative',
+        description: 'Gera interpretação biográfica baseada no rastro nutricional'
+      }
+    });
+
+    // Registar Versões Ativas (Deveria vir de ficheiros de config em prod)
+    // Placeholder para garantir que o sistema tem algo para correr
+  }
+
+  private simulateAiResponse(code: string, variables: any): string {
+    return `[Governed Response for ${code}] Baseado nos dados biográficos fornecidos (score: ${variables.score || 'N/A'}), a sua narrativa de wellness está estável e auditada.`;
   }
 }
