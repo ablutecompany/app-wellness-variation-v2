@@ -1,9 +1,9 @@
 /**
  * SEMANTIC DOMAIN ENGINE v1.2.0 - Core Types
- * Deterministic Health Narratives
+ * Deterministic Health Narratives - Stale Logic
  */
 
-export type DomainType = 'sleep' | 'nutrition' | 'general' | 'energy' | 'recovery' | 'performance';
+export type DomainType = 'sleep' | 'nutrition' | 'general'; // Restrito conforme solicitado
 
 export type DomainStatus = 
   | 'sufficient_data' 
@@ -40,10 +40,10 @@ export interface RecommendationItem {
 }
 
 export interface DomainScore {
-  value: number; // 0-100
-  stateLabel: string; // 'Excelente', 'Bom', 'Atenção'
+  value: number; 
+  stateLabel: string; 
   band: 'optimal' | 'fair' | 'poor';
-  confidence: number; // 0.0 - 1.0
+  confidence: number; 
   freshnessPenalty: number;
   completenessPenalty: number;
   status: DomainStatus;
@@ -53,11 +53,20 @@ export interface DomainSemanticOutput {
   domain: DomainType;
   version: string;
   generatedAt: number;
+  lastComputedAt: number; // NOVO: Auditoria Biográfica
+  isStale: boolean;       // NOVO: Sinalizador de Revalidação Pendente
   score: DomainScore;
   insights: DomainInsight[];
   recommendations: RecommendationItem[];
   evidence: EvidenceRef[];
-  trace: string[]; // Audit IDs
+  trace: string[]; 
+}
+
+export interface DomainAuditTrace {
+  requestedDomains: string[];
+  processedDomains: string[];
+  engineVersion: string;
+  timestamp: number;
 }
 
 export interface DomainSemanticBundle {
@@ -66,4 +75,5 @@ export interface DomainSemanticBundle {
   userId: string;
   domains: Record<string, DomainSemanticOutput>;
   coherenceFlags: string[];
+  auditTrace: DomainAuditTrace; // NOVO
 }

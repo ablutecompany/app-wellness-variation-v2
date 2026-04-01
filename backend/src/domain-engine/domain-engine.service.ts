@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ScoringService } from './scoring.service';
 import { InsightComposerService } from './insight-composer.service';
 import { RecommendationComposerService } from './recommendation-composer.service';
-import { DomainType, DomainSemanticOutput, DomainSemanticBundle, DomainStatus } from './types';
+import { DomainType, DomainSemanticOutput, DomainSemanticBundle, DomainStatus, DomainAuditTrace } from './types';
 
 @Injectable()
 export class DomainEngineService {
@@ -15,15 +15,15 @@ export class DomainEngineService {
   ) {}
 
   /**
-   * Gerar o bundle semântico (Audit-Ready v1.2.0).
-   * Suporta recomputação parcial real via requestedDomains.
+   * Gerar o bundle semântico consolidado (v1.2.0).
+   * Implementa a Política B: Placeholder determinístico para domínios não solicitados.
    */
   async generateBundle(userId: string, requestedDomains?: DomainType[]): Promise<DomainSemanticBundle> {
-    const allDomains: DomainType[] = ['sleep', 'nutrition', 'general', 'energy', 'recovery', 'performance'];
+    const allDomains: DomainType[] = ['sleep', 'nutrition', 'general'];
     const processedDomains: DomainType[] = [];
     const outputs: Record<string, DomainSemanticOutput> = {};
 
-    // 1. Fetch relevant signals (latest normalized measurements)
+    // 1. Fetch relevant signals (biometric evidence)
     const measurements = await this.prisma.normalizedMeasurement.findMany({
       where: { session: { userId } },
       orderBy: { capturedAt: 'desc' },
@@ -31,31 +31,34 @@ export class DomainEngineService {
     });
 
     for (const domain of allDomains) {
-      // ── LOGICA DE RECOMPUTAÇÃO PARCIAL ──
-      const skip = requestedDomains && !requestedDomains.includes(domain);
+      // ── POLÍTICA DE PRESERVAÇÃO PARCIAL ──
+      // Se requestedDomains vier preenchido, só recomputamos os pedidos.
+      const shouldRecompute = !requestedDomains || requestedDomains.includes(domain);
       
-      if (skip) {
-        // Opção: Preenchimento compatível (v1.2.0 - Stale Placeholder)
-        // No futuro, isto pode vir de uma cache de último bundle bem-sucedido.
-        outputs[domain] = this.createStalePlaceholder(domain);
-      } else {
+      if (shouldRecompute) {
         outputs[domain] = await this.processDomain(domain, measurements);
         processedDomains.push(domain);
+      } else {
+        // Opção B: Placeholder compatível (Garante estabilidade na shell)
+        outputs[domain] = this.createStalePlaceholder(domain);
       }
     }
+
+    const auditTrace: DomainAuditTrace = {
+      requestedDomains: requestedDomains || ['all'],
+      processedDomains,
+      engineVersion: '1.2.0',
+      timestamp: Date.now()
+    };
 
     return {
       bundleVersion: '1.2.0',
       generatedAt: Date.now(),
       userId,
       domains: outputs,
-      coherenceFlags: ['multi_domain_sync_active', 'partial_recomputation_v1_2'],
-      auditTrace: {
-        requestedDomains: requestedDomains || ['all'],
-        processedDomains,
-        engineVersion: '1.2.0'
-      }
-    } as any; // Cast compatível com metadados de trace
+      coherenceFlags: ['multi_domain_sync_active', 'partial_bundle_v1_2_op_b'],
+      auditTrace
+    };
   }
 
   private async processDomain(domain: DomainType, allMeasurements: any[]): Promise<DomainSemanticOutput> {
@@ -75,6 +78,8 @@ export class DomainEngineService {
       domain,
       version: '1.2.0',
       generatedAt: Date.now(),
+      lastComputedAt: Date.now(),
+      isStale: false,
       score,
       insights,
       recommendations,
@@ -83,24 +88,30 @@ export class DomainEngineService {
     };
   }
 
+  /**
+   * Criação de Placeholder Determinístico (Opção B).
+   * Evita reutilização de valores obsoletos sem prova de frescura.
+   */
   private createStalePlaceholder(domain: DomainType): DomainSemanticOutput {
     return {
       domain,
-      version: '1.2.0', // Mantém compatibilidade de versão
-      generatedAt: 0,   // Sinaliza que não foi re-gerado agora
+      version: '1.2.0',
+      generatedAt: 0, 
+      lastComputedAt: 0,
+      isStale: true, // SINALIZADOR OPERACIONAL CLARO
       score: {
         value: 0,
-        stateLabel: 'Pendente Revalidação',
+        stateLabel: 'Revalidação Requerida', // PT-PT Centralizado
         band: 'poor',
         confidence: 0,
         freshnessPenalty: 1,
         completenessPenalty: 0,
-        status: 'stale' // INDICAÇÃO CLARA DETERMINÍSTICA
+        status: 'stale'
       },
       insights: [],
       recommendations: [],
       evidence: [],
-      trace: ['skipped_by_request']
+      trace: ['op_b_placeholder']
     };
   }
 }
