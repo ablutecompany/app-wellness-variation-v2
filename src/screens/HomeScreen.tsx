@@ -194,6 +194,20 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   const [isNfcScanning, setIsNfcScanning] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
   const [bioTab, setBioTab] = useState(0);
+
+  // -- DEMO MODE STATE --
+  const [showDemoModal, setShowDemoModal] = useState(false);
+  const handleSelectDemo = (key: any) => {
+    semanticOutputService.setDemoScenario(key);
+    setShowDemoModal(false);
+    
+    // Auto-abrir painel esquerdo após delay cénico
+    if (dataOpen) closeData();
+    setTimeout(() => {
+      openThemes();
+    }, 400);
+  };
+
   const [themesOpen, setThemesOpen] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
   const [stableExpanded, setStableExpanded] = useState(false);
@@ -994,11 +1008,15 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           {/* ── Compact Header ── */}
           <View style={styles.themePanelHeader}>
           <View style={{ flex: 1 }}>
-            <Typography style={styles.themePanelTitle}>INTERPRETAÇÃO DAS ANÁLISES POR IA</Typography>
-            <Typography style={styles.themePanelTagline}>O que o teu corpo está a dizer hoje.</Typography>
-            <View style={{ backgroundColor: 'red', padding: 8, marginTop: 10, borderRadius: 8 }}>
-               <Typography style={{ color: 'white', fontWeight: 'bold' }}>DEBUG SECÇÃO AI VISIBLE - BUILD CANÁRIO - MASTER</Typography>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Typography style={styles.themePanelTitle}>INTERPRETAÇÃO DAS ANÁLISES POR IA</Typography>
+              {semanticOutputService.getActiveDemoScenario() && (
+                <View style={{ backgroundColor: '#00F2FF20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginLeft: 8, borderWidth: 1, borderColor: '#00F2FF40' }}>
+                  <Typography style={{ color: '#00F2FF', fontSize: 9, fontWeight: 'bold' }}>MODO DEMO</Typography>
+                </View>
+              )}
             </View>
+            <Typography style={styles.themePanelTagline}>O que o teu corpo está a dizer hoje.</Typography>
           </View>
             <TouchableOpacity
               onPress={closeThemes}
@@ -1343,6 +1361,14 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   <X size={24} color="rgba(255,255,255,0.8)" />
                 </TouchableOpacity>
                 <Typography variant="h2" style={styles.panelTitle}>Bioanálise</Typography>
+
+                <TouchableOpacity 
+                   style={{ backgroundColor: 'rgba(0, 242, 255, 0.1)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center' }}
+                   onPress={() => setShowDemoModal(true)}
+                >
+                   <Sparkles size={16} color="#00F2FF" />
+                   <Typography style={{ color: '#00F2FF', fontSize: 13, fontWeight: 'bold', marginLeft: 8 }}>MODO DEMO</Typography>
+                </TouchableOpacity>
               </View>
 
               {/* ── Tab Bar ── */}
@@ -1405,6 +1431,68 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
                   </View>
                 )}
               </ScrollView>
+
+              {/* ── MODO DEMO PICKER MODAL ── */}
+              <Modal visible={showDemoModal} transparent animationType="fade">
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 24 }}>
+                  <View style={{ backgroundColor: '#1C1C22', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                      <Typography variant="h2" style={{ fontSize: 20, color: 'white' }}>Forçar Cenário Demo</Typography>
+                      <TouchableOpacity onPress={() => setShowDemoModal(false)} style={{ padding: 8 }}>
+                        <X size={20} color="rgba(255,255,255,0.5)" />
+                      </TouchableOpacity>
+                    </View>
+                    
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+                      {[
+                        { key: 'balanced', label: 'Equilíbrio geral', color: '#00D4AA', colorBg: 'rgba(0, 212, 170, 0.1)' },
+                        { key: 'low_energy', label: 'Energia em baixo', color: '#FFD700', colorBg: 'rgba(255, 215, 0, 0.1)' },
+                        { key: 'poor_recovery', label: 'Recuperação insuficiente', color: '#FF4D4D', colorBg: 'rgba(255, 77, 77, 0.1)' },
+                        { key: 'irregular_digestion', label: 'Digestão irregular', color: '#FFA500', colorBg: 'rgba(255, 165, 0, 0.1)' },
+                        { key: 'unstable_rhythm', label: 'Ritmo instável', color: '#FF00FF', colorBg: 'rgba(255, 0, 255, 0.1)' },
+                        { key: 'mixed', label: 'Perfil misto plausível', color: '#00F2FF', colorBg: 'rgba(0, 242, 255, 0.1)' }
+                      ].map(item => (
+                        <TouchableOpacity
+                          key={item.key}
+                          onPress={() => handleSelectDemo(item.key)}
+                          style={{
+                            padding: 16,
+                            marginBottom: 12,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: item.colorBg,
+                            backgroundColor: 'rgba(25,25,30,0.6)',
+                            flexDirection: 'row',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.color, marginRight: 12 }} />
+                          <Typography style={{ color: 'white', fontWeight: '600' }}>{item.label}</Typography>
+                        </TouchableOpacity>
+                      ))}
+
+                      {/* Botão de limpeza - Reverter para Factual */}
+                      <TouchableOpacity
+                        onPress={() => handleSelectDemo(null)}
+                        style={{
+                          marginTop: 12,
+                          padding: 16,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.05)'
+                        }}
+                      >
+                        <Typography style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '600' }}>
+                          Desativar Demo (Usar Factual Real)
+                        </Typography>
+                      </TouchableOpacity>
+                    </ScrollView>
+                  </View>
+                </View>
+              </Modal>
+
             </BlurView>
           </Animated.View>
         );
