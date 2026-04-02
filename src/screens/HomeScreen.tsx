@@ -204,28 +204,27 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   // -- DEMO MODE STATE --
   const [showDemoModal, setShowDemoModal] = useState(false);
   const handleSelectDemo = (key: any) => {
-    // 1. Oculta Modal
+    // 1. Oculta Modal imediatamente para libertar a layer de touch
     setShowDemoModal(false);
     
-    // 2. Fecha painel direito (mantendo estado em true até a animação Web CSS estabilizar e acabar)
-    Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start(() => {
+    // 2. Arranca a animação de fecho da gaveta Direita
+    Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start(({ finished }) => {
+      // SÓ EM CALLBACK (quando a animação acaba de deslizar passados ~400ms):
+      // - Desmontamos o backdrop da Direita
       setDataOpen(false);
-    });
-    
-    // 3. Empurra cálculo de payload e trigger da gaveta esquerda para Tick isolado
-    // Isto evita que o grande render array congele a engine `useNativeDriver` no Web
-    setTimeout(() => {
-      // Re-render massivo do Ecrã e Semantic Store
+      
+      // - Injetamos os dados massivos na cache (O Ecrã fará Re-Render síncrono aqui!)
+      // Sendo que a animação anterior já terminou, o React Native Web não congela a UI!
       semanticOutputService.setDemoScenario(key);
       
-      // Prepara gaveta Esquerda para aparecer
+      // - Renderizamos a gaveta da Esquerda em background
       setThemesOpen(true);
 
-      // Anima entrada passados 50ms para desfasar do re-render anterior
+      // - Passamos o controlo ao browser e disparamos a entrada suave da gaveta Esquerda
       setTimeout(() => {
         Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
       }, 50);
-    }, 200); 
+    });
   };
 
   const [themesOpen, setThemesOpen] = useState(false);
