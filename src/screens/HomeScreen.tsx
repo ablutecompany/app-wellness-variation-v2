@@ -370,6 +370,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
     outputRange: [0.88, 1],
     extrapolate: 'clamp',
   });
+  const homeShrink = Animated.multiply(homeShrinkFromThemes, homeShrinkFromData);
 
   // Mutable refs for edge gesture callbacks (avoid stale closures in PanResponder)
   const openThemesRef = useRef<() => void>(() => {});
@@ -795,7 +796,7 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
           {
             transform: [
               { translateX: homeShiftX },
-              { scale: themesOpen ? homeShrinkFromThemes : homeShrinkFromData },
+              { scale: homeShrink },
             ],
           },
         ]}
