@@ -204,22 +204,24 @@ export const HomeScreen = ({ navigation }: { navigation: any }) => {
   // -- DEMO MODE STATE --
   const [showDemoModal, setShowDemoModal] = useState(false);
   const handleSelectDemo = (key: any) => {
-    semanticOutputService.setDemoScenario(key);
+    // 1. Oculta Modal limpezamente sem re-renderizar todo o Ecrã
     setShowDemoModal(false);
     
-    // Inicia a fecho do menu direito explicitamente
+    // 2. Inicia fecho direito e permite que o Browser construa e proteja a tag css 'transform'
+    // (O Native Driver em Web quebra/congela se o componente re-renderizar agudamente logo a seguir)
     setDataOpen(false);
+    setThemesOpen(true); // Mantem Backdrop
     Animated.spring(dataAnim, { toValue: width, useNativeDriver: true }).start();
     
-    // Marca o menu da Esquerda como Aberto instantaneamente
-    // para que a variável "themesOpen" mantenha a "mask/backdrop" do ecrã escura
-    // sem "ficar claro" abruptamente no intervalo.
-    setThemesOpen(true);
-
-    // Atrasa puramente o deslize visual do ecrã da Esquerda por motivos cénicos
+    // 3. Empurra o cálculo pesado do Modo Demo e o despiste esquerdo para um novo Tick na CallStack
     setTimeout(() => {
-      Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
-    }, 300);
+      semanticOutputService.setDemoScenario(key);
+      
+      // 4. Animação de entrada só começa perfeitamente encadeada e limpa
+      setTimeout(() => {
+        Animated.spring(themesAnim, { toValue: 0, useNativeDriver: true }).start();
+      }, 100);
+    }, 250);
   };
 
   const [themesOpen, setThemesOpen] = useState(false);
